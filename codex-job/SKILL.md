@@ -20,6 +20,14 @@ Use `/codex-job` to offload implementation-ready tasks to Codex.
 - Architecture/design is still changing.
 - You need tight real-time interactive iteration.
 
+## Delegation Guardrails
+
+These rules apply to every delegated agent unless the task prompt explicitly overrides them:
+
+- **No tests without explicit instruction.** Delegated agents must not write, edit, or run any test files unless the task prompt explicitly says to. This includes `tests/`, `test_*.py`, `*.spec.ts`, `*.test.ts`, and any other test file patterns.
+- **Write set is authoritative.** The agent must only touch files listed in the task's write set. Any file outside that set is off-limits.
+- **No scope expansion.** If a guardrail conflicts with code reality, the agent must stop and report before broadening scope.
+
 ## Core Workflow
 
 1. Validate readiness (all four checks above must pass).

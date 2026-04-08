@@ -274,7 +274,12 @@ run_doctor() {
       ;;
   esac
 
-  doctor_check_required_env "CODEX_API_KEY" "export CODEX_API_KEY=<token> before running Codex"
+  # CODEX_API_KEY is only needed for raw API key auth; OAuth installs use ~/.codex/auth.json
+  if [[ -n "${CODEX_API_KEY:-}" ]]; then
+    doctor_check_required_env "CODEX_API_KEY" "export CODEX_API_KEY=<token> before running Codex"
+  else
+    doctor_line "INFO" "auth" "CODEX_API_KEY not set — assuming OAuth auth via ~/.codex/auth.json"
+  fi
   doctor_check_optional_env "CODEX_WEBHOOK_SECRET" "set when using --notify-cmd to sign events"
   doctor_check_optional_env "WEBHOOK_SECRET" "set when using --notify-cmd to sign events"
 
@@ -1050,7 +1055,14 @@ if [[ -z "$TASK" && -z "$RESUME_SESSION" ]]; then
   exit 2
 fi
 
-require_env_var "CODEX_API_KEY" "Codex CLI authentication"
+# CODEX_API_KEY check: skip when CLI is OAuth-authenticated (tokens in ~/.codex/auth.json)
+if [[ -z "${CODEX_API_KEY:-}" ]]; then
+  if [[ ! -f "${HOME}/.codex/auth.json" ]]; then
+    echo "Error: CODEX_API_KEY is not set and no ~/.codex/auth.json found. Run 'codex login' or export CODEX_API_KEY." >&2
+    exit 2
+  fi
+  # OAuth auth — let codex use its own token store
+fi
 if [[ -n "$NOTIFY_CMD" ]]; then
   require_any_env_var "notification signing secret" "CODEX_WEBHOOK_SECRET" "WEBHOOK_SECRET"
 fi
