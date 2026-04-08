@@ -20,13 +20,25 @@ Use `/codex-job` to offload implementation-ready tasks to Codex.
 - Architecture/design is still changing.
 - You need tight real-time interactive iteration.
 
+## Delegation Guardrails
+
+These rules apply to every delegated agent unless the task prompt explicitly overrides them:
+
+- **No tests without explicit instruction.** Delegated agents must not write, edit, or run any test files unless the task prompt explicitly says to. This includes `tests/`, `test_*.py`, `*.spec.ts`, `*.test.ts`, and any other test file patterns.
+- **Write set is authoritative.** The agent must only touch files listed in the task's write set. Any file outside that set is off-limits.
+- **No scope expansion.** If a guardrail conflicts with code reality, the agent must stop and report before broadening scope.
+
 ## Core Workflow
 
 1. Validate readiness (all four checks above must pass).
 2. Choose Interface and Model:
 
 ### Using Codex
-- Choose Model: `gpt-5.1-codex-mini` (simple), `gpt-5.1-codex-max` (default), `gpt-5.2-codex` (complex)
+- Choose Model:
+  - `gpt-5.1-codex-mini` — default for most implementation tasks (single subsystem, clear write set, runnable tests)
+  - `gpt-5.4-mini` — for higher-complexity tasks (cross-cutting changes, full-stack wiring, multiple coordinated files)
+  - Anything larger: break the task into smaller tickets first. If it genuinely cannot be split, ask the user before proceeding.
+- Larger models are available by explicit user request/authorization only: `gpt-5.4`, `gpt-5.3-codex`, `gpt-5.2`, `gpt-5.1-codex-max`.
 - Launch with: `scripts/invoke_codex_with_review.sh --repo <path> --task "<task>"`
 - Prefer `--notify-cmd "scripts/notify_terminal.sh"`.
 - Note: these `scripts/...` paths are skill-local runtime scripts, not root-repo wrappers.

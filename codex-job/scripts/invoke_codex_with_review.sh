@@ -13,6 +13,7 @@ usage() {
 
 REPO=""
 TASK=""
+TASK_FILE=""
 NOTIFY_CMD=""
 EVENT_STREAM=""
 CODEX_BIN=""
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --task)
       TASK="${2:-}"
+      shift 2
+      ;;
+    --task-file)
+      TASK_FILE="${2:-}"
       shift 2
       ;;
     --notify-cmd)
@@ -197,6 +202,25 @@ PY
 
 echo "Launching Codex task..."
 
+# Resolve task text — read from file if --task-file was given
+if [[ -n "$TASK_FILE" ]]; then
+  TASK="$(cat "$TASK_FILE")"
+fi
+
+# Prepend standing guardrails to every task prompt so delegated agents receive them.
+# These rules are NOT overridable by the task content — they are injected before the task.
+GUARDRAIL_PREAMBLE="## Standing Guardrails (apply to this task)
+- Do NOT write, edit, or run any test files unless this task explicitly instructs it. This includes tests/, test_*.py, *.spec.ts, *.test.ts, and any other test file.
+- Only touch files in the task's write set. Do not modify files outside that scope.
+- If a guardrail conflicts with code reality, stop and report before broadening scope.
+
+---
+
+"
+if [[ -n "$TASK" ]]; then
+  TASK="${GUARDRAIL_PREAMBLE}${TASK}"
+fi
+
 RUNNER_ARGS=(--repo "$REPO")
 if [[ -n "$TASK" ]]; then
   RUNNER_ARGS+=(--task "$TASK")
@@ -272,8 +296,8 @@ if [[ "$EXIT_CODE" -ne 0 ]]; then
       echo "✓ Codex completed work (tokens used found in log)"
     fi
 
-    # Check for real failure indicators
-    if grep -qE "error: |fatal: |Exception:" "$LATEST_LOG" 2>/dev/null; then
+    # Check for real Codex runtime failure indicators (not task output content)
+    if grep -iqE "^\[error\]|^Error:|^fatal error:|^Unhandled exception" "$LATEST_LOG" 2>/dev/null; then
       REAL_FAILURE=1
     fi
 
@@ -342,9 +366,29 @@ if [[ "$EXIT_CODE" -ne 0 ]]; then
     "$(extract_kv "$REVIEW_OUTPUT" "log_file")" \
     "$(extract_kv "$REVIEW_OUTPUT" "summary_file")" \
     "$REVIEW_EXIT"
+  cleanup_codex_children
   exit "$REVIEW_EXIT"
 fi
 
 echo "✓ Task completed successfully"
+
+# Kill any orphan codex subprocesses left over from this run
+cleanup_codex_children() {
+  local pids
+  # Find any 'codex exec' processes still running (defensive — normally codex exits cleanly)
+  pids="$(pgrep -f 'codex exec' 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    echo "Cleaning up orphan codex processes: $pids"
+    kill $pids 2>/dev/null || true
+    sleep 1
+    # Force-kill any survivors
+    local survivors
+    survivors="$(pgrep -f 'codex exec' 2>/dev/null || true)"
+    if [[ -n "$survivors" ]]; then
+      kill -9 $survivors 2>/dev/null || true
+    fi
+  fi
+}
+cleanup_codex_children
 
 exit 0
