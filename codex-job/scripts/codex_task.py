@@ -92,7 +92,7 @@ def _resolve_script_dir(tool_file: Path) -> Path:
 def codex_task(
     repo: str,
     task: str,
-    model: str = "gpt-5.1-codex-max",
+    model: str = "",  # Empty string means use tier-based selection (default: low tier)
     resume_session: str = "",
     timeout_seconds: int = 1800,
 ) -> dict:
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
     repo = sys.argv[1]
     task = sys.argv[2]
-    model = sys.argv[3] if len(sys.argv) > 3 else "gpt-5.1-codex-max"
+    model = sys.argv[3] if len(sys.argv) > 3 else ""  # Default to tier-based
     resume_session = sys.argv[4] if len(sys.argv) > 4 else ""
     timeout_seconds = 1800
     if len(sys.argv) > 5:

@@ -1,6 +1,21 @@
 # Invocation Patterns
 
-## Standard Launch
+## Standard Launch (Tier-Based Model Selection)
+
+```bash
+codex-job/scripts/invoke_codex_with_review.sh \
+  --repo <repo_path> \
+  --task '<task_description_with_acceptance_criteria>' \
+  --tier low \
+  --notify-cmd 'codex-job/scripts/notify_claude_hook.sh --url https://<callback> --secret "$WEBHOOK_SECRET"'
+```
+
+Models are selected automatically from `codex-job/references/available_models.jsonl` based on tier:
+- `--tier low`: Simple deterministic work (default)
+- `--tier medium`: Most implementation work
+- `--tier high`: Complex reasoning (requires explicit user authorization)
+
+## Override with Specific Model
 
 ```bash
 codex-job/scripts/invoke_codex_with_review.sh \
@@ -9,6 +24,8 @@ codex-job/scripts/invoke_codex_with_review.sh \
   --notify-cmd 'codex-job/scripts/notify_claude_hook.sh --url https://<callback> --secret "$WEBHOOK_SECRET"' \
   -- --model gpt-5.1-codex-mini
 ```
+
+Only use explicit `--model` when you need a specific model for compatibility or testing. The tier is still recorded for telemetry.
 
 Webhook payloads are HMAC-SHA256 signed when `--secret`, `WEBHOOK_SECRET`, or `CODEX_WEBHOOK_SECRET` is present; the script sends `X-Signature: sha256=<hex>`.
 
@@ -19,7 +36,7 @@ codex-job/scripts/run_codex_task.sh \
   --repo <repo_path> \
   --resume <session_id> \
   --task 'Follow-up fixes' \
-  -- --model gpt-5.1-codex-max
+  --tier medium
 ```
 
 ## Status Check
@@ -41,9 +58,9 @@ codex-job/scripts/write_delegation_metric.py \
   --out delegation-metrics.jsonl \
   --task-type feature \
   --risk medium \
-  --claude-model sonnet \
-  --delegated-model gpt-5.1-codex-max \
-  --provider codex
+  --claude-model claude-sonnet-4-6 \
+  --delegated-model <model_from_summary_json> \
+  --provider openai
 ```
 
 **After deploy (`~/.claude/skills/codex-job/`):**
@@ -53,14 +70,14 @@ codex-job/scripts/write_delegation_metric.py \
   --out delegation-metrics.jsonl \
   --task-type feature \
   --risk medium \
-  --claude-model sonnet \
-  --delegated-model gpt-5.1-codex-max \
-  --provider codex
+  --claude-model claude-sonnet-4-6 \
+  --delegated-model <model_from_summary_json> \
+  --provider openai
 ```
 
 Pass `--status partial` when Codex partially completed the task (manual judgment based on logs/summary).
 
-Use larger models such as `gpt-5.1-codex-max` only with explicit user authorization.
+Model selection is tier-based; consult `codex-job/references/available_models.jsonl` for current model mappings.
 
 ## Optional Verification
 

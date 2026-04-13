@@ -53,6 +53,7 @@ Sample Creation Prompt:
 
 text
 You are a technical writer. Rewrite the README.md for this project. Include:
+
 - A clear one‑line description.
 - Prerequisites (Codex CLI, jq, etc.).
 - Step‑by‑step installation and quick start.
@@ -60,7 +61,8 @@ You are a technical writer. Rewrite the README.md for this project. Include:
 - Explanation of the wrapper’s purpose (asynchronous delegation to Codex).
 - Troubleshooting common issues.
 Use a friendly, professional tone and markdown formatting. Also create a CONTRIBUTING.md file with coding standards, testing instructions, and PR process.
-6. Caching Architect
+
+1. Caching Architect
 Role: Implement content‑based caching to avoid redundant Codex calls.
 
 Focus: Hashing repo state, file‑based cache, cache invalidation.
@@ -71,12 +73,14 @@ Sample Creation Prompt:
 
 text
 You are a systems programmer. Enhance `run_codex_task.sh` with a caching mechanism:
+
 - Before calling Codex, compute a hash of the task string and the current git commit hash (if inside a repo) or a checksum of the repo files.
 - Store the result (stdout, stderr, exit code) in `~/.cache/codex-job/<hash>/`.
 - If a cached result exists and is less than 24 hours old, return it immediately without calling Codex.
 - Add a `--no-cache` flag to bypass.
 Provide the updated script with clear comments.
-7. JSON Minimizer
+
+1. JSON Minimizer
 Role: Optimize the structure of JSON output to reduce token usage.
 
 Focus: Removing redundant fields, using concise keys, flattening where possible.
@@ -97,7 +101,7 @@ Model Tier: Low
 Sample Creation Prompt:
 
 text
-You are a CLI tool developer. Modify `run_codex_task.sh` to accept a `--tier` argument with values `low`, `medium`, `high`. Based on the tier, set an environment variable or pass a `--model` argument to Codex using a simple mapping (e.g., low → "gpt-3.5-turbo", medium → "gpt-4o-mini", high → "gpt-4o"). If no tier is given, default to `low`. Ensure the argument is passed correctly even when extra args are given after `--`. Provide the updated script.
+You are a CLI tool developer. Modify `run_codex_task.sh` to accept a `--tier` argument with values `low`, `medium`, `high`. Based on the tier, set an environment variable or pass a `--model` argument to Codex using a simple mapping (e.g., low → "gpt-5.1-codex-mini", medium → "gpt-5.4-mini", high → "gpt-5.4-mini"). If no tier is given, default to `low`. Ensure the argument is passed correctly even when extra args are given after `--`. Provide the updated script.
 9. Python Post‑processor
 Role: Create example Python scripts that replace LLM calls for deterministic post‑processing.
 
@@ -120,12 +124,14 @@ Sample Creation Prompt:
 
 text
 You are a full‑stack developer. Design a minimal job queue system for Codex tasks:
+
 - Use SQLite to store jobs with fields: id, task, status (pending/running/completed/failed), created_at, completed_at, result_path.
 - Modify `run_codex_task.sh` to insert a job at start and update it on completion.
 - Create a simple Python HTTP server (`server.py`) that serves a static HTML dashboard and a JSON API to list jobs.
 - The dashboard (HTML + JavaScript) fetches jobs from the API and displays them with auto‑refresh.
 Keep everything lightweight (no frameworks). Provide all code and instructions.
-11. Webhook Signer
+
+1. Webhook Signer
 Role: Implement HMAC signature for webhook payloads to ensure authenticity.
 
 Focus: Signing JSON with a shared secret, adding signature header.
@@ -147,6 +153,7 @@ Sample Creation Prompt:
 
 text
 You are a diagnostic tool developer. Add a `--doctor` flag to `run_codex_task.sh` that performs the following checks and prints a report:
+
 - Are required commands (`codex`, `jq`, `git`, etc.) installed?
 - Are required environment variables (e.g., `CODEX_API_KEY`) set?
 - Is the repo path valid and readable?
@@ -154,6 +161,7 @@ You are a diagnostic tool developer. Add a `--doctor` flag to `run_codex_task.sh
 - Are temporary directories writable?
 Output a clear pass/fail with suggestions for fixing issues. Implement this as a separate function and call it when `--doctor` is present.
 These subagents can be instantiated in parallel by feeding the appropriate prompts to an LLM (or to different instances). The outputs can then be integrated by a human or by a “coordinator agent” that merges changes. This approach maximizes efficiency while keeping AI costs low by using the smallest suitable models for each specialized task.
+
 ## Recommended Subagents for invoke-codex-from-claude
 
 | Agent Name | Coverage | Instruction Link |

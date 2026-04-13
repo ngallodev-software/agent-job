@@ -314,10 +314,53 @@ detect_model_arg() {
 }
 
 map_tier_to_model() {
-  case "$1" in
-    low) echo "gpt-3.5-turbo" ;;
-    medium) echo "gpt-4o-mini" ;;
-    high) echo "gpt-4o" ;;
+  local tier="$1"
+  local provider="${2:-openai}"  # Default to openai if not specified
+  local script_dir models_file model_id
+
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  models_file="$script_dir/../references/available_models.jsonl"
+
+  if [[ ! -f "$models_file" ]]; then
+    # Fallback to hardcoded defaults if models file missing
+    case "$tier" in
+      low) echo "gpt-5.1-codex-mini" ;;
+      medium) echo "gpt-5.4-mini" ;;
+      high) echo "gpt-5.4-mini" ;;
+      *) return 1 ;;
+    esac
+    return 0
+  fi
+
+  # Query available_models.jsonl for matching tier and provider
+  model_id=$(grep -v '^[[:space:]]*#' "$models_file" 2>/dev/null | \
+    python3 -c "
+import sys, json
+tier = '$tier'
+provider = '$provider'
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        model = json.loads(line)
+        if model.get('tier') == tier and model.get('provider') == provider:
+            print(model['model_id'])
+            sys.exit(0)
+    except:
+        continue
+" 2>/dev/null)
+
+  if [[ -n "$model_id" ]]; then
+    echo "$model_id"
+    return 0
+  fi
+
+  # Fallback if no match found
+  case "$tier" in
+    low) echo "gpt-5.1-codex-mini" ;;
+    medium) echo "gpt-5.4-mini" ;;
+    high) echo "gpt-5.4-mini" ;;
     *) return 1 ;;
   esac
 }

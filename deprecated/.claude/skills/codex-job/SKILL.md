@@ -26,9 +26,10 @@ Use `/codex-job` to offload implementation-ready tasks to Codex while minimizing
 1. Validate readiness (all four checks above must pass).
 2. Choose model:
 - `gpt-5.1-codex-mini`: simple deterministic work.
-- `gpt-5.1-codex-max`: default for most implementation work.
-- `gpt-5.2-codex`: complex reasoning.
-- `gpt-5.3-codex`: highest-complexity tasks.
+- `gpt-5.4-mini`: default for most implementation work.
+- `gpt-5.3-codex`: complex reasoning.
+- `gpt-5.4`: highest-complexity tasks.
+- `gpt-5.2`: for human like writing style.
 3. Launch Codex with `scripts/invoke_codex_with_review.sh` and prefer `--notify-cmd`.
 4. Read summary JSON on completion; verify if risk/impact requires it.
 5. If additional fixes are needed, resume with `--resume <session_id>`.

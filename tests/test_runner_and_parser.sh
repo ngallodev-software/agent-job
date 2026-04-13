@@ -160,7 +160,7 @@ run_test_basic() {
 
   local model_line
   model_line="$(rg -n '^fake_codex_model=' "$log_file" | tail -n1 | cut -d: -f2-)"
-  assert_eq "fake_codex_model=gpt-3.5-turbo" "$model_line" "default tier model"
+  assert_eq "fake_codex_model=gpt-5.1-codex-mini" "$model_line" "default tier model"
 
   local cd_line
   cd_line="$(rg -n '^fake_codex_cwd=' "$log_file" | tail -n1 | cut -d: -f2-)"
@@ -172,7 +172,7 @@ run_test_basic() {
 
   assert_eq "true" "$(json_get "$summary" ok)" "ok"
   assert_eq "0" "$(json_get "$summary" exit)" "exit"
-  assert_eq "gpt-3.5-turbo" "$(json_get "$summary" mdl)" "default model selection"
+  assert_eq "gpt-5.1-codex-mini" "$(json_get "$summary" mdl)" "default model selection"
   assert_eq "low" "$(json_get "$summary" tier)" "default model tier"
   assert_eq "tier_default" "$(json_get "$summary" msrc)" "default model source"
   assert_eq "1234" "$(json_get "$summary" tok.in)" "tok.in"
@@ -263,9 +263,9 @@ run_test_tier_mapping() {
 
   local model_line
   model_line="$(rg -n '^fake_codex_model=' "$log_file" | tail -n1 | cut -d: -f2-)"
-  assert_eq "fake_codex_model=gpt-4o-mini" "$model_line" "medium tier model"
+  assert_eq "fake_codex_model=gpt-5.4-mini" "$model_line" "medium tier model"
 
-  assert_eq "gpt-4o-mini" "$(json_get "$summary" mdl)" "mapped model"
+  assert_eq "gpt-5.4-mini" "$(json_get "$summary" mdl)" "mapped model"
   assert_eq "medium" "$(json_get "$summary" tier)" "mapped tier"
   assert_eq "tier_flag" "$(json_get "$summary" msrc)" "model source tier"
 
