@@ -19,6 +19,7 @@ Options:
   --notify-cmd <cmd>    Shell command to receive event JSON on stdin
   --event-stream <path> Append event JSON lines to this file
   --tier <level>        Model tier: low (default), medium, high
+  --provider <name>     Model provider: openai (default), anthropic
   --no-cache            Disable result cache lookup/store for this run
   --cache-dir <path>    Override cache directory (default: $XDG_CACHE_HOME/codex-job or ~/.cache/codex-job)
   --summarize           Emit one-line summary after run completion
@@ -91,6 +92,7 @@ NOTIFY_CMD=""
 EVENT_STREAM=""
 DOCTOR_MODE=0
 MODEL_TIER=""
+MODEL_PROVIDER=""
 EXTRA_ARGS=()
 ORIGINAL_ARGS=("$@")
 CACHE_ENABLED=1
@@ -286,6 +288,23 @@ run_doctor() {
   doctor_check_repo
   doctor_check_tmp
   doctor_check_codex_ping
+
+  # Check for models approaching EOL
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local eol_checker="$script_dir/check_model_eol.py"
+
+  if [[ -x "$eol_checker" ]]; then
+    echo ""
+    echo "== Model EOL Check =="
+    if python3 "$eol_checker" --days 90 2>/dev/null; then
+      : # EOL check passed (exit 0)
+    else
+      : # EOL check found warnings (exit 1), but don't fail doctor
+    fi
+  else
+    doctor_line "INFO" "model eol" "checker not found at $eol_checker (skipping)"
+  fi
 
   if [[ "$DOCTOR_FAILS" -eq 0 ]]; then
     echo "Doctor result: PASS (warnings=$DOCTOR_WARNINGS)"
@@ -1009,6 +1028,10 @@ while [[ $# -gt 0 ]]; do
       MODEL_TIER="${2:-}"
       shift 2
       ;;
+    --provider)
+      MODEL_PROVIDER="${2:-}"
+      shift 2
+      ;;
     --no-cache)
       CACHE_ENABLED=0
       shift
@@ -1136,12 +1159,24 @@ case "$MODEL_TIER" in
     ;;
 esac
 
+if [[ -z "$MODEL_PROVIDER" ]]; then
+  MODEL_PROVIDER="openai"
+fi
+case "$MODEL_PROVIDER" in
+  openai|anthropic)
+    ;;
+  *)
+    echo "Error: --provider must be openai or anthropic." >&2
+    exit 2
+    ;;
+esac
+
 EXPLICIT_MODEL="$(detect_model_arg || true)"
 if [[ -n "$EXPLICIT_MODEL" ]]; then
   MODEL_SELECTED="$EXPLICIT_MODEL"
   MODEL_SOURCE="explicit_model"
 else
-  MODEL_SELECTED="$(map_tier_to_model "$MODEL_TIER")"
+  MODEL_SELECTED="$(map_tier_to_model "$MODEL_TIER" "$MODEL_PROVIDER")"
   if [[ "$MODEL_TIER" == "$DEFAULT_MODEL_TIER" ]]; then
     MODEL_SOURCE="tier_default"
   else

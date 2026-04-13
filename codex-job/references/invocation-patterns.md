@@ -15,6 +15,22 @@ Models are selected automatically from `codex-job/references/available_models.js
 - `--tier medium`: Most implementation work
 - `--tier high`: Complex reasoning (requires explicit user authorization)
 
+### Provider Selection
+
+Add `--provider` to choose between OpenAI and Anthropic models:
+
+```bash
+codex-job/scripts/invoke_codex_with_review.sh \
+  --repo <repo_path> \
+  --task '<task>' \
+  --tier medium \
+  --provider anthropic  # Uses claude-sonnet-4-6 for medium tier
+```
+
+Providers:
+- `openai` (default): GPT models from available_models.jsonl
+- `anthropic`: Claude models from available_models.jsonl
+
 ## Override with Specific Model
 
 ```bash
