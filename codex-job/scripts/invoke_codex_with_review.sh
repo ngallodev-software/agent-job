@@ -388,9 +388,18 @@ if [[ -z "$SESSION_ID" || "$SESSION_ID" == "unknown" ]]; then
   SESSION_ID="$(jq -r '.session_id // empty' "$LATEST_META" 2>/dev/null || true)"
 fi
 
-if [[ -z "$SESSION_ID" || "$SESSION_ID" == "null" ]]; then
-  echo "Warning: No session ID found in metadata"
-  exit "$EXIT_CODE"
+if [[ -z "$SESSION_ID" || "$SESSION_ID" == "null" || "$SESSION_ID" == "unknown" ]]; then
+  echo ""
+  echo "❌ FAILURE: No valid session ID - Codex did not execute"
+  echo "   Reason: Likely missing dependencies or precondition check failed"
+  echo "   Log file: $LATEST_LOG"
+  if [[ -f "$LATEST_LOG" ]]; then
+    echo "   Log size: $(wc -l < "$LATEST_LOG") lines (should be 100s-1000s for real execution)"
+    echo ""
+    echo "   Last 20 lines of log:"
+    tail -20 "$LATEST_LOG" | sed 's/^/   /'
+  fi
+  exit 1
 fi
 
 # Smart failure detection - distinguish real failures from environmental issues
@@ -482,6 +491,22 @@ if [[ "$EXIT_CODE" -ne 0 ]]; then
     "$REVIEW_EXIT"
   cleanup_codex_children
   exit "$REVIEW_EXIT"
+fi
+
+# Verify real execution happened (exit 0 doesn't always mean success)
+if [[ -f "$LATEST_LOG" ]]; then
+  LOG_LINES=$(wc -l < "$LATEST_LOG" 2>/dev/null || echo "0")
+  if [[ "$LOG_LINES" -lt 100 ]]; then
+    echo ""
+    echo "❌ FAILURE: Log too small ($LOG_LINES lines) - Codex likely did not execute properly"
+    echo "   Expected: 100+ lines for real execution"
+    echo "   Found: $LOG_LINES lines (wrapper-only output)"
+    echo "   Log file: $LATEST_LOG"
+    echo ""
+    echo "   Full log content:"
+    cat "$LATEST_LOG" | sed 's/^/   /'
+    exit 1
+  fi
 fi
 
 echo "✓ Task completed successfully"
