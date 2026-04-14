@@ -33,10 +33,9 @@ When invoked with `/codex-job`, you (Claude) must:
    - `--resume <session_id|latest>`: Resume mode (mutually exclusive with new task)
    - `--model <model_id>`: Explicit model override (optional)
 
-2. **Execute the delegation script** using Bash tool:
+2. **Execute the Python wrapper** using Bash tool:
    ```bash
-   cd /home/nate/.claude/skills/codex-job && \
-   ./scripts/invoke_codex_with_review.sh \
+   python3 /home/nate/.claude/skills/codex-job/scripts/codex_delegate.py \
      --repo <path> \
      --tier <tier> \
      --task "<task>" \
@@ -45,10 +44,10 @@ When invoked with `/codex-job`, you (Claude) must:
      [--model <model_id>]
    ```
 
-3. **Report results** after completion:
-   - Extract key metrics from summary JSON
-   - Report: run_id, session_id, exit_code, elapsed_seconds, cost_usd, total_tokens
-   - If exit_code != 0, report error details
+3. **The wrapper provides clean output:**
+   - Success: "Delegated <ticket> to <model> (<tier>) as fork\nTask <ticket> completed in <time>s"
+   - Failure: "Delegated <ticket> to <model> (<tier>) as fork\nTask <ticket> FAILED: <reason>"
+   - All verbose execution details are suppressed
 
 ## Execution Modes
 
@@ -106,16 +105,14 @@ When user says:
 
 You must:
 1. Parse args: repo=/lump/apps/my-project, tier=medium, task="Add login endpoint"
-2. Execute:
+2. Execute the Python wrapper (suppresses verbose output):
    ```bash
-   cd /home/nate/.claude/skills/codex-job && \
-   ./scripts/invoke_codex_with_review.sh \
+   python3 /home/nate/.claude/skills/codex-job/scripts/codex_delegate.py \
      --repo /lump/apps/my-project \
      --tier medium \
      --task "Add login endpoint"
    ```
-3. Wait for completion (may use run_in_background for long tasks)
-4. Read summary JSON and report results
+3. The wrapper outputs clean status - no need to parse or report further
 
 ## Reference Documentation
 
