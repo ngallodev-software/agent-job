@@ -24,7 +24,7 @@ codex-job/scripts/invoke_codex_with_review.sh \
   --repo <repo_path> \
   --task '<task>' \
   --tier medium \
-  --provider anthropic  # Uses claude-sonnet-4-6 for medium tier
+  --provider anthropic  # Uses the current anthropic medium-tier model from the registry
 ```
 
 Providers:
@@ -38,7 +38,7 @@ codex-job/scripts/invoke_codex_with_review.sh \
   --repo <repo_path> \
   --task '<task_description_with_acceptance_criteria>' \
   --notify-cmd 'codex-job/scripts/notify_claude_hook.sh --url https://<callback> --secret "$WEBHOOK_SECRET"' \
-  -- --model gpt-5.1-codex-mini
+  -- --model <model-id-from-registry>
 ```
 
 Only use explicit `--model` when you need a specific model for compatibility or testing. The tier is still recorded for telemetry.
@@ -74,7 +74,7 @@ codex-job/scripts/write_delegation_metric.py \
   --out delegation-metrics.jsonl \
   --task-type feature \
   --risk medium \
-  --claude-model claude-sonnet-4-6 \
+  --claude-model <agent-model-id> \
   --delegated-model <model_from_summary_json> \
   --provider openai
 ```
@@ -86,7 +86,7 @@ codex-job/scripts/write_delegation_metric.py \
   --out delegation-metrics.jsonl \
   --task-type feature \
   --risk medium \
-  --claude-model claude-sonnet-4-6 \
+  --claude-model <agent-model-id> \
   --delegated-model <model_from_summary_json> \
   --provider openai
 ```

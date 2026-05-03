@@ -39,8 +39,8 @@ Delegating agents (both Claude and Codex) sometimes use flags that don't exist i
 
 **Flags passed after `--`** go to Codex CLI directly:
 ```bash
-run_codex_task.sh --repo /path --task "Fix bug" -- --model gpt-5.1-codex-mini
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+run_codex_task.sh --repo /path --task "Fix bug" -- --model <model-id-from-registry>
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                                                   These go to Codex, not the wrapper
 ```
 
@@ -52,14 +52,14 @@ Mixing `--tier` and `--model` flags without understanding the precedence.
 ### Solution
 **Tier-based (recommended):**
 ```bash
---tier low     # Selects from available_models.jsonl (default: gpt-5.1-codex-mini)
---tier medium  # Selects from available_models.jsonl (default: gpt-5.4-mini)
+--tier low     # Selects the current low-tier model from available_models.jsonl
+--tier medium  # Selects the current medium-tier model from available_models.jsonl
 --tier high    # Selects from available_models.jsonl (requires user authorization)
 ```
 
 **Explicit model (for testing/compatibility):**
 ```bash
--- --model gpt-5.1-codex-mini  # Bypasses tier selection, uses specific model
+-- --model <model-id-from-registry>  # Bypasses tier selection, uses specific model
 ```
 
 **If both are provided:**
@@ -184,7 +184,7 @@ Delegation prompts reference specific model names that may become outdated.
 ### Solution
 **Bad:**
 ```
-Use gpt-5.1-codex-mini for this task.
+Use a specific model id for this task.
 ```
 
 **Good:**

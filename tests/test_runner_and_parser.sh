@@ -69,6 +69,27 @@ extract_kv() {
   awk -F= -v k="$key" '$1==k {print substr($0, index($0, "=")+1)}' "$file" | tail -n1
 }
 
+registry_model() {
+  local tier="$1"
+  local provider="${2:-openai}"
+  python3 - "$ROOT_DIR/codex-job/references/available_models.jsonl" "$tier" "$provider" <<'PY'
+import json
+import sys
+
+path, tier, provider = sys.argv[1:4]
+with open(path, "r", encoding="utf-8") as handle:
+    for line in handle:
+        line = line.strip()
+        if not line:
+            continue
+        model = json.loads(line)
+        if model.get("tier") == tier and model.get("provider") == provider:
+            print(model["model_id"])
+            raise SystemExit(0)
+raise SystemExit(f"missing model for tier={tier} provider={provider}")
+PY
+}
+
 make_fake_codex() {
   local out="$1"
   cat > "$out" <<'FAKE'
@@ -160,7 +181,9 @@ run_test_basic() {
 
   local model_line
   model_line="$(rg -n '^fake_codex_model=' "$log_file" | tail -n1 | cut -d: -f2-)"
-  assert_eq "fake_codex_model=gpt-5.1-codex-mini" "$model_line" "default tier model"
+  local expected_model
+  expected_model="$(registry_model low)"
+  assert_eq "fake_codex_model=$expected_model" "$model_line" "default tier model"
 
   local cd_line
   cd_line="$(rg -n '^fake_codex_cwd=' "$log_file" | tail -n1 | cut -d: -f2-)"
@@ -172,7 +195,7 @@ run_test_basic() {
 
   assert_eq "true" "$(json_get "$summary" ok)" "ok"
   assert_eq "0" "$(json_get "$summary" exit)" "exit"
-  assert_eq "gpt-5.1-codex-mini" "$(json_get "$summary" mdl)" "default model selection"
+  assert_eq "$expected_model" "$(json_get "$summary" mdl)" "default model selection"
   assert_eq "low" "$(json_get "$summary" tier)" "default model tier"
   assert_eq "tier_default" "$(json_get "$summary" msrc)" "default model source"
   assert_eq "1234" "$(json_get "$summary" tok.in)" "tok.in"
@@ -263,9 +286,11 @@ run_test_tier_mapping() {
 
   local model_line
   model_line="$(rg -n '^fake_codex_model=' "$log_file" | tail -n1 | cut -d: -f2-)"
-  assert_eq "fake_codex_model=gpt-5.4-mini" "$model_line" "medium tier model"
+  local expected_model
+  expected_model="$(registry_model medium)"
+  assert_eq "fake_codex_model=$expected_model" "$model_line" "medium tier model"
 
-  assert_eq "gpt-5.4-mini" "$(json_get "$summary" mdl)" "mapped model"
+  assert_eq "$expected_model" "$(json_get "$summary" mdl)" "mapped model"
   assert_eq "medium" "$(json_get "$summary" tier)" "mapped tier"
   assert_eq "tier_flag" "$(json_get "$summary" msrc)" "model source tier"
 

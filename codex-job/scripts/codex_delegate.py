@@ -47,6 +47,26 @@ def parse_summary(summary_path: Path) -> dict:
         return {}
 
 
+def load_registry_model(skill_dir: Path, tier: str, provider: str) -> str:
+    """Resolve a model id from available_models.jsonl."""
+    models_path = skill_dir / "references" / "available_models.jsonl"
+    if not models_path.exists():
+        raise FileNotFoundError(f"model registry not found: {models_path}")
+
+    with models_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            model = json.loads(line)
+            if model.get("tier") == tier and model.get("provider") == provider:
+                model_id = model.get("model_id")
+                if isinstance(model_id, str) and model_id:
+                    return model_id
+
+    raise ValueError(f"no model mapping found for tier='{tier}' provider='{provider}'")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Clean codex delegation wrapper")
     parser.add_argument("--repo", required=True, help="Repository path")
@@ -75,13 +95,8 @@ def main():
         cmd.extend(["--task", args.task, "--tier", args.tier])
         ticket_id = extract_ticket_id(args.task)
 
-        # Determine model from tier
-        tier_models = {
-            "low": "gpt-5.1-codex-mini",
-            "medium": "gpt-5.4-mini",
-            "high": "gpt-5.3-codex",
-        }
-        model_display = args.model if args.model else tier_models.get(args.tier, args.tier)
+        provider = args.provider or "openai"
+        model_display = args.model if args.model else load_registry_model(skill_dir, args.tier, provider)
         tier_display = f"{args.tier} tier"
 
     if args.provider:

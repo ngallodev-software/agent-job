@@ -341,14 +341,8 @@ map_tier_to_model() {
   models_file="$script_dir/../references/available_models.jsonl"
 
   if [[ ! -f "$models_file" ]]; then
-    # Fallback to hardcoded defaults if models file missing
-    case "$tier" in
-      low) echo "gpt-5.1-codex-mini" ;;
-      medium) echo "gpt-5.4-mini" ;;
-      high) echo "gpt-5.4-mini" ;;
-      *) return 1 ;;
-    esac
-    return 0
+    echo "Error: model registry not found: $models_file" >&2
+    return 1
   fi
 
   # Query available_models.jsonl for matching tier and provider
@@ -375,13 +369,8 @@ for line in sys.stdin:
     return 0
   fi
 
-  # Fallback if no match found
-  case "$tier" in
-    low) echo "gpt-5.1-codex-mini" ;;
-    medium) echo "gpt-5.4-mini" ;;
-    high) echo "gpt-5.4-mini" ;;
-    *) return 1 ;;
-  esac
+  echo "Error: no model mapping found for tier '$tier' and provider '$provider' in $models_file" >&2
+  return 1
 }
 
 resolve_cache_dir() {
