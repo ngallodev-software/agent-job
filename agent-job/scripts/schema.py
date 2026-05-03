@@ -232,10 +232,8 @@ def validate_provenance_config(raw: Mapping[str, Any]) -> dict[str, bool]:
     return out
 
 
-def load_job_v2(job_path: Path) -> JobV2:
-    """Load and validate schema v2 job."""
-    raw = load_yaml_file(job_path)
-
+def load_job_v2_from_mapping(raw: Mapping[str, Any], source_path: Path) -> JobV2:
+    """Validate a schema v2 mapping and return a JobV2."""
     schema_version = raw.get("schema_version")
     if schema_version != 2:
         raise ValidationError(f"expected schema_version: 2, got {schema_version!r}")
@@ -356,8 +354,14 @@ def load_job_v2(job_path: Path) -> JobV2:
         provenance_config=provenance_config,
         created_by=created_by,
         created_at=created_at,
-        source_path=job_path.resolve(),
+        source_path=source_path.resolve(),
     )
+
+
+def load_job_v2(job_path: Path) -> JobV2:
+    """Load and validate schema v2 job."""
+    raw = load_yaml_file(job_path)
+    return load_job_v2_from_mapping(raw, job_path)
 
 
 def migrate_v1_to_v2(raw_v1: dict[str, Any], source_path: Path) -> JobV2:
@@ -407,59 +411,8 @@ def migrate_v1_to_v2(raw_v1: dict[str, Any], source_path: Path) -> JobV2:
     if "model" in raw_v1:
         print(f"warning: ignoring v1 model (executor-specific, configure in executor)", file=sys.stderr)
 
-    # Now validate as v2 (reuse validation logic)
-    return load_job_v2_from_dict(v2_raw, source_path)
-
-
-def load_job_v2_from_dict(raw: dict[str, Any], source_path: Path) -> JobV2:
-    """Load JobV2 from a dictionary (helper for migration)."""
-    # Create a temporary YAML file in memory, validate through normal path
-    # This is a simplification - in production, extract validation to a separate function
-    # For now, reconstruct validated JobV2 manually from the migrated structure
-
-    repo_path = Path(raw["repo_path"]).resolve()
-    task = raw["task"]
-    scope = raw["scope"]
-    execution = raw["execution"]
-
-    # Validate paths
-    allowed_paths = normalize_repo_relative_paths(
-        scope["allowed_paths"], "scope.allowed_paths", repo_path, reject_git=True
-    )
-    default_forbidden = [".git/", ".env", ".env.local", ".env.*", "node_modules/"]
-    forbidden_input = scope.get("forbidden_paths", [])
-    forbidden_paths = normalize_repo_relative_paths(
-        forbidden_input + [path for path in default_forbidden if path not in forbidden_input],
-        "scope.forbidden_paths",
-        repo_path,
-    )
-
-    return JobV2(
-        schema_version=2,
-        job_id=raw["id"],
-        title=raw["title"],
-        repo_path=repo_path,
-        branch=raw.get("branch"),
-        task_type=task["type"],
-        objective=task["objective"],
-        context=task.get("context", ""),
-        constraints=task.get("constraints", []),
-        acceptance_criteria=task.get("acceptance_criteria", []),
-        allowed_paths=allowed_paths,
-        forbidden_paths=sorted(dict.fromkeys(forbidden_paths)),
-        mode=execution.get("mode", "agent"),
-        preferred_executor=execution.get("preferred_executor"),
-        allowed_executors=execution.get("allowed_executors", []),
-        disallowed_executors=execution.get("disallowed_executors", []),
-        commands_allowed=execution.get("commands_allowed", []),
-        commands_forbidden=execution.get("commands_forbidden", []),
-        test_commands=execution.get("test_commands", []),
-        output_contract=validate_output_contract(raw),
-        provenance_config=validate_provenance_config(raw),
-        created_by=raw["created_by"],
-        created_at=raw["created_at"],
-        source_path=source_path,
-    )
+    # Now validate as v2 using the same fail-closed logic as native schema v2.
+    return load_job_v2_from_mapping(v2_raw, source_path)
 
 
 def load_job(job_path: Path) -> JobV2:

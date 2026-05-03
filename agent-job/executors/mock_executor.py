@@ -20,7 +20,11 @@ class MockExecutor(BaseExecutor):
 
     def can_execute(self, job: JobV2) -> bool:
         """Mock executor is always available if allowed."""
-        return "mock" in job.allowed_executors or not job.disallowed_executors
+        if job.disallowed_executors and "mock" in job.disallowed_executors:
+            return False
+        if job.allowed_executors and "mock" not in job.allowed_executors:
+            return False
+        return True
 
     def execute(self, job: JobV2, run_dir: Path, dry_run: bool) -> ExecutionResult:
         """Simulate job execution with predictable output."""

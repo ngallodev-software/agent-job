@@ -135,6 +135,40 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
 
 
+def validate_agent_claims(job: JobV2, result_claims: dict[str, Any]) -> list[str]:
+    """Validate the executor/agent result against the job's output contract."""
+    errors: list[str] = []
+
+    summary = result_claims.get("summary")
+    if job.output_contract.get("require_summary") and not isinstance(summary, str):
+        errors.append("missing summary in agent_claims")
+    elif job.output_contract.get("require_summary") and not summary.strip():
+        errors.append("empty summary in agent_claims")
+
+    changed_files = result_claims.get("changed_files")
+    if job.output_contract.get("require_changed_files"):
+        if not isinstance(changed_files, list):
+            errors.append("missing changed_files list in agent_claims")
+        elif len(changed_files) == 0:
+            errors.append("changed_files is empty but output_contract.require_changed_files is true")
+
+    tests_run = result_claims.get("tests_run")
+    if job.output_contract.get("require_tests_run"):
+        if not isinstance(tests_run, list):
+            errors.append("missing tests_run list in agent_claims")
+        elif len(tests_run) == 0:
+            errors.append("tests_run is empty but output_contract.require_tests_run is true")
+
+    risks = result_claims.get("risks")
+    if job.output_contract.get("require_risks"):
+        if not isinstance(risks, list):
+            errors.append("missing risks list in agent_claims")
+        elif len(risks) == 0:
+            errors.append("risks is empty but output_contract.require_risks is true")
+
+    return errors
+
+
 def cmd_package(args: argparse.Namespace) -> int:
     """Create work package for non-executed targets."""
     job_path = Path(args.job_file).resolve()
@@ -314,6 +348,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("")
 
         result = executor.execute(job, run_dir, args.dry_run)
+        contract_errors = validate_agent_claims(job, result.agent_claims)
+        effective_success = result.success and not contract_errors
 
         # Write artifacts
         (run_dir / "job.input.yaml").write_text(job_path.read_text(encoding="utf-8"), encoding="utf-8")
@@ -326,9 +362,10 @@ def cmd_run(args: argparse.Namespace) -> int:
             "mode": "run",
             "executor": result.executor_name,
             "launched_by_tool": result.launched_by_tool,
-            "process_success": result.success,
+            "process_success": effective_success,
             "exit_code": result.exit_code,
             "dry_run": args.dry_run,
+            "contract_errors": contract_errors,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         write_json(run_dir / "meta.json", meta)
@@ -338,19 +375,24 @@ def cmd_run(args: argparse.Namespace) -> int:
             "job_id": job.job_id,
             "run_id": run_id,
             "executor": result.executor_name,
-            "success": result.success,
+            "success": effective_success,
             "agent_claims": result.agent_claims,
             "executor_observations": result.executor_observations,
+            "contract_errors": contract_errors,
         }
         write_json(run_dir / "report.json", report)
 
         print(f"\nExecution complete")
-        print(f"Success: {result.success}")
+        print(f"Success: {effective_success}")
+        if contract_errors:
+            print("Contract errors:")
+            for error in contract_errors:
+                print(f"  - {error}")
         print(f"Run directory: {run_dir}")
         print(f"\nView report:")
         print(f"  agent-job report {run_dir}")
 
-        return 0 if result.success else 1
+        return 0 if effective_success else 1
 
     except ValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)
