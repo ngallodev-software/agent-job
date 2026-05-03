@@ -13,13 +13,13 @@
     "provider": "openai",
     "tier": "very-low",
     "token_cost_multiplier": 0,
-    "recomended": false
+    "recomended": true
   },
   {
     "model_id": "gpt-4.1",
     "name": "GPT-4.1",
     "provider": "openai",
-    "tier": null,
+    "tier": "medium",
     "token_cost_multiplier": 1,
     "recomended": false
   }

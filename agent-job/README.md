@@ -54,6 +54,33 @@ Then:
 4. Fill out `report-template.md`
 5. Review changes and decide whether to commit
 
+### Install and Refresh Copilot Models
+
+`agent-job` ships with a Copilot model registry pipeline because the available model list is user-specific.
+
+From the repo root:
+
+```bash
+npm install
+npm run copilot:models:sync
+```
+
+This writes:
+- `agent-job/references/copilot/available_models.raw.json`
+- `agent-job/references/copilot/available-models.template.json`
+- `agent-job/references/copilot/available_models.copilot.jsonl`
+
+Customize preferred models by editing:
+- `agent-job/references/copilot/available-models.md`
+
+Then rerun:
+
+```bash
+npm run copilot:models:sync
+```
+
+See [Copilot Model Registry README](./references/copilot/README.md).
+
 ### Render a Prompt
 
 ```bash
@@ -233,6 +260,35 @@ agent-job report <run-dir>
 6. **Fill report**: Document results in `report-template.md`
 7. **Review**: Check diff, verify acceptance criteria
 8. **Decide**: Commit if acceptable, iterate if not
+
+## Copilot Model Registry
+
+The canonical Copilot model registry is:
+
+- `agent-job/references/copilot/available_models.copilot.jsonl`
+
+Why this exists:
+
+- available Copilot models differ by user, org policy, and subscription
+- the raw Copilot SDK response is too noisy for normal selection use
+- the override layer lets each user mark preferred models without editing runtime code
+
+The skill should primarily read these fields:
+
+- `model_id`
+- `tier`
+- `recomended`
+- `token_cost_multiplier`
+- `policy_state`
+- `supported_reasoning_efforts`
+- `default_reasoning_effort`
+
+Selection guidance:
+
+1. require `policy_state == "enabled"`
+2. prefer `recomended == true`
+3. then choose by `tier`
+4. check reasoning-effort support only when the task needs it
 
 ## Provenance Model
 

@@ -16,5 +16,4 @@ ui/*.js
 # Untracked development artifacts
 .codex
 .dev-report-cache.md
-package.json
-package-lock.json
+.gh_token

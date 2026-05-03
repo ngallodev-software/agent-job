@@ -45,6 +45,27 @@ python3 /lump/apps/invoke-codex-from-claude/agent-job/scripts/agent-job --help
 
 **Requirements**: Python 3, PyYAML
 
+For the Copilot model registry pipeline:
+
+```bash
+npm install
+npm run copilot:models:sync
+```
+
+This generates the current user's Copilot-specific registry at:
+
+- `agent-job/references/copilot/available_models.copilot.jsonl`
+
+Customize preferences in:
+
+- `agent-job/references/copilot/available-models.md`
+
+Then rerun:
+
+```bash
+npm run copilot:models:sync
+```
+
 ### Copilot Package Workflow (Recommended)
 
 Create a work package for GitHub Copilot:
@@ -207,6 +228,23 @@ GitHub Copilot Chat and Copilot Workspace are the approved execution environment
 - ✅ Enables provenance tracking even for external execution
 - ❌ Does NOT automate or bypass Copilot (no fake execution)
 - ❌ Does NOT require Codex installation or auth
+
+### Copilot Model Selection
+
+Do not assume every user sees the same Copilot models.
+
+The repo includes a user-specific model sync pipeline:
+
+- fetch raw SDK models for the current user
+- save the raw JSON
+- apply local preference overrides
+- emit `available_models.copilot.jsonl` for selection use
+
+Canonical files:
+
+- `agent-job/references/copilot/available_models.copilot.jsonl`
+- `agent-job/references/copilot/available-models.md`
+- `agent-job/references/copilot/README.md`
 
 ### Package Workflow Steps
 

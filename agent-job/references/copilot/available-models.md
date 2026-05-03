@@ -9,4 +9,5 @@ gpt-5.4, 1.0x, medium tier
 gpt-5.3-codex, 1.0x, medium tier
 gpt-5.2, 1x, medium tier
 gpt-5.4-mini, .33x, low tier
-gpt-5-mini, 0x, very-low tier
+gpt-5-mini, 0x, very-low tier, recommended
+gpt-4.1, 1.0x, medium tier
