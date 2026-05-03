@@ -1,0 +1,61 @@
+schema_version: 2
+id: JOB-COPILOT-DOCS-001
+title: Update documentation for agent-job
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: null
+
+task:
+  type: docs
+  objective: >
+    Update README to present agent-job as the canonical CLI interface.
+  context: |
+    The repository has pivoted from Codex-specific tooling to a universal agent job contract system.
+    Copilot and manual workflows are now first-class supported modes alongside Codex.
+  constraints:
+    - Do not auto-commit changes.
+    - Do not auto-push to remote.
+    - Keep documentation clear and concise.
+  acceptance_criteria:
+    - README presents agent-job as the canonical CLI.
+    - Copilot package workflow is documented.
+    - Codex is described as an executor adapter option.
+
+scope:
+  allowed_paths:
+    - README.md
+    - docs/
+  forbidden_paths:
+    - .git/
+    - .env
+
+execution:
+  mode: agent
+  preferred_executor: copilot
+  allowed_executors:
+    - copilot
+    - human
+    - codex
+    - mock
+  disallowed_executors: []
+  commands_allowed:
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

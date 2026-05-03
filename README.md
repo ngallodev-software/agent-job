@@ -1,185 +1,383 @@
-# invoke-codex-from-claude
+# agent-job: Universal Agent Job Contract
 
-A Claude Code skill for delegating implementation-ready work to Codex with tier-based model selection, automatic resume/review, and structured run metadata.
+A universal, executor-neutral engineering job contract system that supports Copilot, manual, and Codex workflows with strict validation, bounded scope, and human review.
 
-Quickstart: see `README-TLDR.md` for the shortest install/setup/use path.
+## What This Is
 
-## Script Layout
+- **Universal job contract**: Executor-neutral job specifications for bounded engineering work
+- **Multi-executor support**: Works with GitHub Copilot, manual workflows, local Codex, or mock testing
+- **Package mode**: Create work packages for Copilot/manual execution without tool-launched agents
+- **Strict validation**: Fail-closed schema validation with clear error messages
+- **Artifact capture**: Deterministic provenance tracking and human review artifacts
+- **Human review required**: All workflows require human review before commit
 
-- Canonical runtime implementation lives in `codex-job/scripts/` and is the source of truth.
-- Root `scripts/` are thin executable wrappers for shell/Python orchestration and should only delegate to `codex-job/scripts/`.
-- Skill code must never reference root `scripts/`.
+## What This Is Not
 
-## Prerequisites
+- Not Codex-specific (Codex is one executor adapter among several)
+- Not a production platform, queue, or dashboard
+- Not a control plane or provider fanout layer
+- Not an autonomous coding system
+- Not an auto-commit or auto-push tool
+- Not a Copilot automation bypass
 
-- `bash` with `set -euo pipefail` support, `python3` (for parsers), and `jq` for inspecting summaries.
-- Codex CLI installed and authenticated (typically via `CODEX_API_KEY`; see your Codex docs).
-- `curl` for webhook notifications, `rg` (ripgrep) for tests, and `chmod`/`cp` for installs.
+## Supported Modes
 
-## Installation
+| Mode | Target/Executor | Tool Launches Agent? | Use Case |
+|---|---|:---:|---|
+| **render** | copilot | No | Generate Copilot-ready prompt |
+| **render** | manual | No | Generate human work order |
+| **render** | codex | No | Generate Codex adapter prompt |
+| **package** | copilot | No | Create Copilot work package |
+| **package** | manual | No | Create manual work package |
+| **run** | mock | Yes | Test without external dependencies |
+| **run** | codex | Yes | Local Codex execution |
+| **report** | any | No | Review run or package artifacts |
 
-- Install the skill into your preferred scope:
-  - Project-local: `./install_codex_job_skill.sh --scope project`
-  - User/global: `./install_codex_job_skill.sh --scope user`
-- Preview without changes: append `--dry-run`.
-- Uninstall: `./uninstall_codex_job_skill.sh --scope user` (add `--dry-run` to preview).
-- Skill assets live in `.claude/skills/codex-job/`; the install mirrors the full `codex-job/` tree into that location, including nested reference files. PATH edits are wrapped in tagged blocks for safe re-run and removal.
+## Quick Start
 
-## End-to-End Example (Codex)
+### Installation
 
-1. Ensure `CODEX_API_KEY` is exported for the Codex CLI.
-2. (Optional) Set a callback: `export CLAUDE_HOOK_URL=https://example.com/codex-events`.
-3. Run with automatic review + events:
+```bash
+# Add agent-job to PATH (temporary)
+export PATH="/lump/apps/invoke-codex-from-claude/agent-job/scripts:$PATH"
 
-   ```bash
-   codex-job/scripts/invoke_codex_with_review.sh \
-     --repo /path/to/repo \
-     --task "Fix failing tests" \
-     --tier medium \
-     --event-stream runs/events.jsonl \
-     --notify-cmd "codex-job/scripts/notify_claude_hook.sh --url https://example.com/codex-events" \
-     -- --model gpt-5.1-codex-mini
-   ```
+# Or use directly
+python3 /lump/apps/invoke-codex-from-claude/agent-job/scripts/agent-job --help
+```
 
-   `invoke_codex_with_review.sh` enables `--summarize` by default; pass `--no-summarize` to disable.
-4. Results:
-   - Log: `runs/codex-run-<run_id>.log`
-   - Summary JSON: `runs/codex-run-<run_id>.summary.json`
-   - Events: `runs/events.jsonl` (contains `run_started`, `run_completed`, and any review events).
-5. Resume a session if needed: `codex-job/scripts/run_codex_task.sh --repo /path/to/repo --resume <session_id> --task "Follow-up fixes"`.
+**Requirements**: Python 3, PyYAML
 
-### Invoke Summarize Behavior
+### Copilot Package Workflow (Recommended)
 
-- `codex-job/scripts/invoke_codex_with_review.sh` enables one-line summaries by default for both the initial run and any review run.
-- Disable summaries with `--no-summarize`.
-- Override the summarizer implementation with `--summarizer <path>` (passed through to `run_codex_task.sh`).
-- The one-line output is also stored in meta JSON as `one_line_summary`.
+Create a work package for GitHub Copilot:
 
-### Model Selection Tiers
+```bash
+# 1. Create a schema v2 job file (see examples/v2/)
+# 2. Package for Copilot
+agent-job package examples/v2/copilot-docs.job.yaml --target copilot
 
-- `--tier` chooses a cost tier (default: `low`): low, medium, or high
-- Models are selected automatically from `codex-job/references/available_models.jsonl` based on tier and provider
-- The skill chooses the current best model for each tier; model mappings can be updated without code changes
-- If you pass `--model` explicitly, the explicit model wins and the tier is recorded for telemetry only
-- The selected model and source are written to the log, meta JSON, and summary JSON for auditing
-- Result cache is enabled by default for new task runs. Use `--no-cache` to bypass lookup/store, or `--cache-dir <path>` to choose a specific cache location
+# 3. Open the generated prompt
+cat runs/JOB-COPILOT-DOCS-001/*/prompt.copilot.md
 
-See `codex-job/references/available_models.jsonl` for current model mappings and capabilities.
+# 4. Copy prompt to GitHub Copilot Chat or Copilot Workspace
+# 5. Execute work in Copilot environment
+# 6. Fill out report-template.md with results
+# 7. Review diff and decide whether to commit
+```
 
-### Cache Key Semantics
+**Output**: `runs/<job-id>/<timestamp>-copilot-package/`
+- `prompt.copilot.md` - Paste into Copilot
+- `checklist.md` - Human review checklist
+- `report-template.md` - Completion template
+- `job.input.yaml` - Original job spec
+- `meta.json` - Package metadata
 
-- Cache lookup/store applies only to new task mode (`run_codex_task.sh` without `--resume`) when `--no-cache` is not set.
-- Cache entries are keyed by a hash of:
-  - Absolute repo path
-  - Git HEAD commit hash (or `nogit` outside a git work tree)
-  - Git dirty state (`clean`/`dirty`)
-  - Run mode (`new`)
-  - Selected model and tier
-  - Task text
-- Any change to those inputs creates a new key, resulting in a cache miss and a fresh Codex execution.
-- A valid cache hit requires `summary.json`, `meta.json`, and `log.txt` in the cache entry directory.
+### Manual Workflow
 
-## Repository Structure
+Create a human-readable work order:
 
-- `codex-job/` - Claude Code skill for Codex delegation (canonical source)
-  - `SKILL.md` - Skill definition and usage instructions
-  - `scripts/` - Runtime implementation (bash/python)
-  - `references/` - Documentation, examples, model registry
-  - `assets/` - Templates and resources
-- `scripts/` - Thin wrappers that delegate to codex-job/scripts/
-- `tests/` - Integration tests for skill scripts
-- `install_codex_job_skill.sh` / `uninstall_codex_job_skill.sh` - Skill installers
-- `future-plans/` - Control plane / orchestration features (not part of current skill)
-- `repo-dev-agents/` - Agents useful for developing this repository
-- `deprecated/` - Obsolete code (Gemini support, old skill copies)
+```bash
+agent-job package examples/v2/manual-refactor.job.yaml --target manual
+```
 
-### Gemini Support (Deprecated)
+Use the generated work order with any approved tool or agent.
 
-Swap the runner: `codex-job/scripts/run_gemini_task.sh --repo . --task "Implement feature" -- --model gemini-2.0-pro-exp`.
+### Mock Testing
 
-## Environment Variables
+Test the workflow without external dependencies:
 
-- `CODEX_API_KEY`: Required by the Codex CLI for authentication (validated by the runner).
-- `CODEX_LOG_VERBOSITY` / `GEMINI_LOG_VERBOSITY`: Default log verbosity (`low` | `normal` | `high` | `extreme`).
-- `CLAUDE_HOOK_URL`: Default callback URL for `notify_claude_hook.sh`.
-- `CODEX_WEBHOOK_SECRET` or `WEBHOOK_SECRET`: Required when `--notify-cmd` is set; used to HMAC‑sign webhook bodies as `X-Signature: sha256=<hex>`.
-- Coordination hooks:
-  - Future summary schema trimming from `json-minimizer` will keep a lean key set; see below.
+```bash
+agent-job run examples/v2/mock-test.job.yaml --executor mock
+agent-job report runs/JOB-MOCK-TEST-001/*/
+```
 
-## Summary JSON (lean format)
+### Validate and Render
 
-Generated by `codex-job/scripts/parse_codex_run.py` and `codex-job/scripts/parse_gemini_run.py` (root wrappers delegate to these canonical scripts; installed copies live under `~/.claude/skills/codex-job/scripts/`):
+```bash
+# Validate a job file
+agent-job validate examples/v2/copilot-docs.job.yaml
 
-- Short keys (default): `id`, `sid` (session), `repo`, `task`, `resume`, `start`, `end`, `time` (seconds), `exit`, `ok`, `log`, `meta`, `tok.{in,out,tot,ev}`, `cost.{usd,ev}`, `err`, `src`.
-- Backward compatibility: a nested `legacy` object carries the previous verbose fields (`run_id`, `session_id`, `elapsed_seconds`, `exit_code`, `token_usage`, `cost`, etc.) for consumers that still expect them.
-- To force an inline legacy copy for debugging, set `SUMMARY_JSON_LEGACY=1` before running.
+# Render for specific target
+agent-job render examples/v2/copilot-docs.job.yaml --target copilot
+agent-job render examples/v2/manual-refactor.job.yaml --target manual
+```
 
-### Python post-processing example (L5)
+## Job Schema v2
 
-- Script: `scripts/summary_minifier.py` emits a compact view from the canonical summary JSON (supports lean + nested `legacy` inputs).
-- Usage (stdout): `scripts/summary_minifier.py --input runs/codex-run-<id>.summary.json`
-- Usage (write file): `scripts/summary_minifier.py -i runs/codex-run-<id>.summary.json -o runs/codex-run-<id>.summary.min.json`
-- Output keys: `id`, `sess`, `repo`, `task`, `resume`, `start`, `end`, `time`, `exit`, `ok`, `msg`, `log`, `meta`, `tokens.{in,out,total}`, `cost`, `source`.
-- One-line terminal summary: `codex-job/scripts/summarize_codex_run.py --summary runs/codex-run-<id>.summary.json`
-- Inline one-line summary from runner: add `--summarize` (optionally `--summarizer <path>`) to `run_codex_task.sh`.
+Schema v2 is executor-neutral with organized sections:
 
-## Dry-Run and Verification
+```yaml
+schema_version: 2
+id: JOB-2026-05-03-001
+title: Job title
+repo_path: /absolute/path
+branch: null
 
-- Install/uninstall: use `--dry-run` to preview file operations without writing; installers are idempotent and safe to re-run.
-- Webhook delivery: `codex-job/scripts/notify_claude_hook.sh --dry-run` echoes the payload instead of calling the URL.
-- Webhook signatures: when `--secret`, `WEBHOOK_SECRET`, or `CODEX_WEBHOOK_SECRET` is set, the payload is signed with `X-Signature: sha256=<hex>`. Receivers should compute `hmac_sha256(secret, raw_body)` and compare in constant time. Quick check in Bash:
+task:
+  type: implementation | bugfix | refactor | test | docs | analysis
+  objective: What to accomplish
+  context: Background information
+  constraints: [rules to follow]
+  acceptance_criteria: [success conditions]
 
-  ```bash
-  expected=$(SECRET="$WEBHOOK_SECRET" BODY="$(cat payload.json)" python3 - <<'PY'
+scope:
+  allowed_paths: [writable paths]
+  forbidden_paths: [forbidden paths]
 
-import hashlib, hmac, os
-print(hmac.new(os.environ["SECRET"].encode(), os.environ["BODY"].encode(), hashlib.sha256).hexdigest())
-PY
-  )
-  [[ "sha256=$expected" == "$X_SIGNATURE_FROM_REQUEST" ]]
+execution:
+  mode: agent | human | ci
+  preferred_executor: copilot | human | codex | mock
+  allowed_executors: [list]
+  disallowed_executors: [list]
+  commands_allowed: [list]
+  commands_forbidden: [list]
+  test_commands: [list]
 
-  ```
-- Event capture: add `--event-stream runs/events.jsonl` to any runner to keep a local JSONL trail while iterating.
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: true
+  require_risks: true
+  human_review_required: true
 
-## Troubleshooting
-- **CLI not found**: ensure `codex` or `gemini` is on `PATH`; otherwise set `--codex-bin`/`--gemini-bin`.
-- **Missing session id**: check the log for `session id:` lines; the parser records `session_id` as `null` when absent.
-- **No summary_json line**: confirm `codex-job/scripts/parse_codex_run.py` is executable (or use the installed skill copy) and that the log path is writable.
-- **Webhook failures**: use `--dry-run` on `notify_claude_hook.sh` to validate payloads before sending; verify `CLAUDE_HOOK_URL` or `--url` is set and `curl` is installed.
-- **Token metrics empty**: Codex/Gemini must emit token lines; if missing, only `total_tokens` may be populated from fallback patterns.
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: true
 
-## Doctor Mode
-- Run environment diagnostics (commands, env vars, repo/log/temp access, optional Codex connectivity) without executing a task:
-  ```bash
-  codex-job/scripts/run_codex_task.sh --doctor --repo . --codex-bin codex
-  ```
+created_by: human
+created_at: 2026-05-03T00:00:00Z
+```
 
-- Exits non-zero when required checks fail; warnings (e.g., missing optional webhook secrets) do not fail the doctor run.
+See `examples/v2/` for complete examples and `agent-job/README.md` for detailed documentation.
 
-## UI (Local-First)
+## Commands
 
-- The initial operator UI scaffold lives in `ui/`.
-- Diagnose environment: `bash scripts/ui_doctor.sh`
-- Bootstrap dependencies and smoke checks: `bash scripts/bootstrap_ui.sh`
-- Run UI locally:
+### validate
 
-  ```bash
-  cd ui
-  npm run dev
-  ```
+Validate a job file:
+```bash
+agent-job validate <job.job.yaml>
+```
 
-- Default dev URL: `http://localhost:4173`
+### render
 
-## Testing
+Render job to target-specific prompt:
+```bash
+agent-job render <job.job.yaml> --target <copilot|manual|codex|claude>
+```
 
-- Core agents metadata: `tests/test_agents_metadata.sh`
-- Event/schema contracts: `tests/test_contract_schemas.sh`
-- Codex runner + parser: `tests/test_runner_and_parser.sh`
-- Gemini runner + parser: `tests/test_gemini_runner_and_parser.sh`
-- Invoke + notify + review flow: `tests/test_invoke_and_notify.sh`
-- Install/uninstall dry-run sanity: `tests/test_install_dry_run.sh`
-- Run from repo root: `bash tests/test_runner_and_parser.sh` (tests create their own temp repos and fake CLIs).
+### package
 
-## Uninstall
+Create work package without execution:
+```bash
+agent-job package <job.job.yaml> --target <copilot|manual>
+```
 
-`./uninstall_codex_job_skill.sh --scope user` removes the installed skill tree; add `--dry-run` to preview.
+### run
+
+Execute job via specified executor:
+```bash
+agent-job run <job.job.yaml> --executor <codex|mock> [--dry-run]
+```
+
+**Note**: `--executor copilot` is not supported. Use `package --target copilot` instead.
+
+### report
+
+Print report for a run or package:
+```bash
+agent-job report <run-dir>
+```
+
+## Copilot Workflow Details
+
+### Why Package Mode?
+
+GitHub Copilot Chat and Copilot Workspace are the approved execution environments in many organizations. The `agent-job` tool:
+- ✅ Creates Copilot-ready prompts with clear scope and constraints
+- ✅ Provides completion templates for consistent reporting
+- ✅ Enables provenance tracking even for external execution
+- ❌ Does NOT automate or bypass Copilot (no fake execution)
+- ❌ Does NOT require Codex installation or auth
+
+### Package Workflow Steps
+
+1. **Create job file** with `preferred_executor: copilot`
+2. **Package**: `agent-job package job.yaml --target copilot`
+3. **Review prompt**: Check `runs/.../prompt.copilot.md` for clarity
+4. **Copy to Copilot**: Paste into Copilot Chat or Workspace
+5. **Execute**: Let Copilot perform the work in approved environment
+6. **Document**: Fill out `report-template.md` with Copilot's output
+7. **Review diff**: Verify changes meet acceptance criteria
+8. **Commit decision**: Human decides whether to commit
+
+### Package Honesty
+
+Package mode metadata (`meta.json`):
+```json
+{
+  "mode": "package",
+  "target": "copilot",
+  "launched_by_tool": false,
+  "process_success": null,
+  "exit_code": null
+}
+```
+
+The tool is honest about what it did and didn't do.
+
+## Schema v1 Compatibility
+
+Schema v1 (codex-job format) is auto-migrated with warnings:
+
+```bash
+$ agent-job validate examples/bugfix.job.yaml
+warning: schema v1 is deprecated; migrate to schema v2
+warning: ignoring v1 model_tier (Codex-specific, not in v2 schema)
+valid: JOB-EXAMPLE-BUGFIX
+```
+
+See [Migration Guide](docs/migration-from-codex-job.md) for details.
+
+## Migration from codex-job
+
+The `codex-job` CLI is the legacy Codex-specific predecessor to `agent-job`. Both can coexist.
+
+### Key Differences
+
+| Feature | codex-job | agent-job |
+|---|---|---|
+| Identity | Codex-specific | Executor-neutral |
+| Schema | v1 (flat) | v2 (structured) |
+| Copilot support | No | Yes (package mode) |
+| Manual support | No | Yes (package mode) |
+| Provenance | `claimed_by_codex` | `claimed_by_agent` |
+| Auth requirement | Always Codex | Only when `--executor codex` |
+| Render targets | One (Codex) | Multiple (Copilot, manual, Codex) |
+
+### Migration Steps
+
+1. **Keep using codex-job** for existing Codex workflows (no changes needed)
+2. **Try agent-job** for new Copilot/manual workflows
+3. **Convert jobs** from schema v1 → v2 (or use auto-migration)
+4. **Test with mock**: `agent-job run job.yaml --executor mock`
+5. **Switch to agent-job** when ready
+
+See [Migration Guide](docs/migration-from-codex-job.md) for complete instructions.
+
+## Using codex-job (Legacy)
+
+The original `codex-job` CLI remains available:
+
+```bash
+# Install (if not already installed)
+./install_codex_job_skill.sh --scope project
+
+# Use codex-job commands
+codex-job validate examples/bugfix.job.yaml
+codex-job run examples/bugfix.job.yaml
+```
+
+**Requirements**: Python 3, PyYAML, Codex CLI (`codex login`)
+
+See `codex-job/` directory for legacy documentation.
+
+## Provenance Model
+
+The system distinguishes between:
+
+- **observed**: Runner captured via git/fs/process
+- **declared_by_job**: Job file specified
+- **claimed_by_agent**: Agent reported (Copilot, Codex, mock, etc.)
+- **claimed_by_executor**: Executor wrapper reported
+- **inferred**: Derived from other data
+- **not_captured**: Runner could not capture
+- **not_run**: Not executed
+- **unknown**: Indeterminate
+
+Package mode is honest about non-execution:
+- `launched_by_tool: false`
+- `process_success: null`
+- No fabricated exit codes
+
+## Safety Model
+
+- Strict fail-closed validation
+- Absolute repo paths required
+- Allowed/forbidden path enforcement (prompt-based)
+- No auto-commit, no auto-push
+- Human review required for all workflows
+- Package mode honest about non-execution
+- No shell callbacks or dangerous operations
+- No Copilot automation bypass
+
+## Architecture
+
+```
+agent-job/                          # Universal architecture
+  scripts/
+    agent-job, agent_job_cli.py, schema.py
+  executors/
+    base_executor.py, mock_executor.py, codex_executor.py
+  renderers/
+    base_renderer.py, copilot_renderer.py, manual_renderer.py, codex_renderer.py
+
+codex-job/                          # Legacy Codex-specific
+  scripts/codex-job, codex_job_cli.py
+
+examples/
+  v2/                               # Schema v2 examples
+    copilot-docs.job.yaml
+    manual-refactor.job.yaml
+    mock-test.job.yaml
+  *.job.yaml                        # Schema v1 examples (legacy)
+```
+
+See [Architecture Documentation](docs/current-architecture.md) for details.
+
+## Examples
+
+**Schema v2 examples** (recommended):
+- `examples/v2/copilot-docs.job.yaml` - Copilot workflow
+- `examples/v2/manual-refactor.job.yaml` - Manual workflow
+- `examples/v2/mock-test.job.yaml` - Mock testing
+
+**Schema v1 examples** (legacy, auto-migrated):
+- `examples/bugfix.job.yaml`
+- `examples/refactor.job.yaml`
+- `examples/docs.job.yaml`
+
+## Documentation
+
+- **[agent-job README](agent-job/README.md)** - Detailed agent-job documentation
+- **[Migration Guide](docs/migration-from-codex-job.md)** - Schema v1 → v2 migration
+- **[Architecture](docs/current-architecture.md)** - System architecture
+- **[Safety Model](docs/safety-model.md)** - Safety and validation
+- **[Phase A Report](docs/phase-a-implementation-report.md)** - Implementation details
+
+## Known Limitations
+
+Phase A limitations:
+- Codex executor: Full execution pending migration (dry-run works)
+- Completion ingestion: Not yet implemented
+- Claude renderer: Not yet implemented
+- Git integration: Partial (from codex-job, not fully migrated)
+
+See [Phase A Report](docs/phase-a-implementation-report.md) for details.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for security policies.
+
+## License
+
+See [LICENSE](LICENSE) file.
+
+## Support
+
+For issues or questions, see the repository issue tracker or documentation.

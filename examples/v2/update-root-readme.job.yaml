@@ -1,0 +1,69 @@
+schema_version: 2
+id: JOB-UPDATE-ROOT-README-001
+title: Update root README to present agent-job as canonical
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: fix/re-org
+
+task:
+  type: docs
+  objective: >
+    Rewrite the root README.md to present agent-job as the canonical CLI interface,
+    document the Copilot package workflow, and provide clear migration guidance from codex-job.
+  context: |
+    Phase A implementation is complete. The repository now has a universal agent-job CLI that
+    supports Copilot, manual, and Codex workflows. The old codex-job CLI still exists but
+    should be presented as legacy/compatibility mode.
+
+    Current README presents codex-job as the primary interface. This needs to change to
+    reflect the new universal architecture while maintaining backwards compatibility information.
+  constraints:
+    - Do not remove existing codex-job documentation entirely; move to compatibility section.
+    - Keep README concise and scannable.
+    - Include a clear table showing supported modes.
+    - Do not auto-commit changes.
+    - Do not auto-push to remote.
+  acceptance_criteria:
+    - README title presents agent-job as canonical
+    - Copilot package workflow is documented
+    - Supported modes table included
+    - Migration section from codex-job included
+    - Quick start uses agent-job commands
+
+scope:
+  allowed_paths:
+    - README.md
+  forbidden_paths:
+    - .git/
+    - .env
+
+execution:
+  mode: agent
+  preferred_executor: copilot
+  allowed_executors:
+    - copilot
+    - human
+    - claude
+    - mock
+  disallowed_executors: []
+  commands_allowed:
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T09:50:00Z

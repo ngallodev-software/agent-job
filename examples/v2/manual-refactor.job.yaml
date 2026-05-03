@@ -1,0 +1,61 @@
+schema_version: 2
+id: JOB-MANUAL-REFACTOR-001
+title: Extract common provenance logic
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: null
+
+task:
+  type: refactor
+  objective: >
+    Extract provenance-related functions into a shared module to reduce duplication.
+  context: |
+    Provenance logic is currently duplicated between codex-job and agent-job implementations.
+  constraints:
+    - Do not change external behavior.
+    - Do not auto-commit.
+    - Keep imports backwards compatible.
+  acceptance_criteria:
+    - Provenance functions are in a shared module.
+    - Both CLIs import from shared module.
+    - All existing tests pass.
+
+scope:
+  allowed_paths:
+    - agent-job/scripts/
+    - codex-job/scripts/
+  forbidden_paths:
+    - .git/
+    - .env
+
+execution:
+  mode: human
+  preferred_executor: human
+  allowed_executors:
+    - human
+    - codex
+    - mock
+  disallowed_executors: []
+  commands_allowed:
+    - python3
+    - pytest
+    - git
+  commands_forbidden:
+    - git push
+    - rm -rf
+  test_commands:
+    - python3 -m pytest tests/
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: true
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: true
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

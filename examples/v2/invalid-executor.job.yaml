@@ -1,0 +1,47 @@
+schema_version: 2
+id: JOB-INVALID-EXECUTOR-001
+title: Test job with invalid executor
+repo_path: /tmp
+branch: null
+
+task:
+  type: test
+  objective: >
+    This job should fail validation because it references an unknown executor.
+  context: |
+    Used for testing validation logic.
+  constraints:
+    - Do not use.
+  acceptance_criteria:
+    - Job validation fails.
+
+scope:
+  allowed_paths:
+    - test/
+  forbidden_paths:
+    - .git/
+
+execution:
+  mode: agent
+  preferred_executor: unknown-executor-123
+  allowed_executors:
+    - unknown-executor-123
+  disallowed_executors: []
+  commands_allowed: []
+  commands_forbidden: []
+  test_commands: []
+
+output_contract:
+  require_summary: false
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: false
+  human_review_required: false
+
+provenance:
+  distinguish_agent_claims: false
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

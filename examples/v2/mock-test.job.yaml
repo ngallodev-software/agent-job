@@ -1,0 +1,53 @@
+schema_version: 2
+id: JOB-MOCK-TEST-001
+title: Test agent-job CLI with mock executor
+repo_path: /tmp
+branch: null
+
+task:
+  type: test
+  objective: >
+    Verify that the agent-job CLI can execute jobs via the mock executor.
+  context: |
+    This is a test job for validating the universal agent-job architecture.
+  constraints:
+    - Do not make real changes.
+    - Do not auto-commit.
+  acceptance_criteria:
+    - Mock executor completes successfully.
+    - Artifacts are generated.
+    - Report is generated.
+
+scope:
+  allowed_paths:
+    - test/
+  forbidden_paths:
+    - .git/
+
+execution:
+  mode: agent
+  preferred_executor: mock
+  allowed_executors:
+    - mock
+  disallowed_executors:
+    - codex
+  commands_allowed: []
+  commands_forbidden:
+    - git push
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: false
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z
