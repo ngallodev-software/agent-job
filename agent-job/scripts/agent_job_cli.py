@@ -24,7 +24,6 @@ from mock_executor import MockExecutor  # noqa: E402
 # Import renderers
 from copilot_renderer import CopilotRenderer  # noqa: E402
 from manual_renderer import ManualRenderer  # noqa: E402
-from codex_renderer import CodexRenderer  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,7 +40,12 @@ def parse_args() -> argparse.Namespace:
     # Render
     render = subparsers.add_parser("render", help="Render job to target-specific prompt")
     render.add_argument("job_file", help="Path to *.job.yaml")
-    render.add_argument("--target", required=True, choices=["copilot", "manual", "codex", "claude"], help="Render target")
+    render.add_argument(
+        "--target",
+        required=True,
+        choices=["copilot", "manual", "codex", "claude"],
+        help="Render target",
+    )
 
     # Package
     package = subparsers.add_parser("package", help="Create work package without execution")
@@ -83,10 +87,16 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
 def get_renderer(target: str):
     """Get renderer for target."""
+    if target == "codex":
+        raise NotImplementedError(
+            "agent-job render --target codex is not yet implemented. "
+            "Use codex-job for Codex-specific execution paths."
+        )
+    if target == "claude":
+        raise NotImplementedError("agent-job render --target claude is not yet implemented.")
     renderers = {
         "copilot": CopilotRenderer(),
         "manual": ManualRenderer(),
-        "codex": CodexRenderer(),
     }
     renderer = renderers.get(target)
     if not renderer:
@@ -260,14 +270,14 @@ def cmd_run(args: argparse.Namespace) -> int:
     """Execute job via specified executor."""
     job_path = Path(args.job_file).resolve()
 
-    # Special check: block --executor copilot
-    if args.executor == "copilot":
-        print("error: Copilot is supported through package mode only.", file=sys.stderr)
+    if args.executor == "codex":
+        print("error: agent-job run --executor codex is not yet implemented.", file=sys.stderr)
         print("", file=sys.stderr)
-        print("Use:", file=sys.stderr)
+        print("Use one of:", file=sys.stderr)
         print(f"  agent-job package {args.job_file} --target copilot", file=sys.stderr)
+        print(f"  codex-job run {args.job_file}", file=sys.stderr)
         print("", file=sys.stderr)
-        print("Then copy the generated prompt to Copilot Chat or Copilot Workspace.", file=sys.stderr)
+        print("Use agent-job for Copilot/manual packaging and codex-job for live Codex execution.", file=sys.stderr)
         return 1
 
     try:

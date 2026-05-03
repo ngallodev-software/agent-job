@@ -1,11 +1,11 @@
 # Migration Guide: codex-job → agent-job
 
-This guide helps you migrate from `codex-job` (Codex-specific) to `agent-job` (universal).
+This guide helps you migrate from `codex-job` (Codex-specific) to `agent-job` (Copilot/manual forward path).
 
 ## Summary
 
 - **codex-job**: Legacy Codex-specific CLI (schema v1)
-- **agent-job**: Universal executor-neutral CLI (schema v2)
+- **agent-job**: Copilot/manual CLI with schema v2 and mock testing
 - **Both can coexist**: No forced migration, migrate at your own pace
 - **Auto-migration**: Schema v1 jobs work with agent-job (with warnings)
 
@@ -58,17 +58,12 @@ agent-job validate job.job.yaml
 codex-job render job.job.yaml
 ```
 
-**After (agent-job - Codex target)**:
-```bash
-agent-job render job.job.yaml --target codex
-```
-
 **After (agent-job - Copilot target)**:
 ```bash
 agent-job render job.job.yaml --target copilot
 ```
 
-**Change**: Added `--target` flag for multiple renderers
+**Change**: Added `--target` flag for packaging-oriented renderers. `codex` and `claude` targets are not yet implemented in `agent-job`.
 
 ### run
 
@@ -81,12 +76,10 @@ codex-job run job.job.yaml --run-tests
 
 **After (agent-job)**:
 ```bash
-agent-job run job.job.yaml --executor codex
-agent-job run job.job.yaml --executor codex --dry-run
-# --run-tests: pending migration
+agent-job run job.job.yaml --executor mock
 ```
 
-**Change**: Added `--executor` flag
+**Change**: `agent-job` currently supports mock execution only. Use `codex-job` for live Codex execution.
 
 ### report
 
@@ -333,11 +326,11 @@ codex-job run /abs/path/to/job.job.yaml
 # Option 1: Keep using codex-job (no changes needed)
 codex-job run /abs/path/to/job.job.yaml
 
-# Option 2: Use agent-job with Codex executor (pending full migration)
-agent-job run /abs/path/to/job.job.yaml --executor codex --dry-run
+# Option 2: Use agent-job for Copilot/manual packaging and mock validation
+agent-job package /abs/path/to/job.job.yaml --target copilot
 ```
 
-**Status**: Full Codex execution via agent-job pending Phase B migration.
+**Status**: Full Codex execution via `agent-job` is not yet implemented.
 
 ### Copilot Workflow (New)
 
@@ -367,14 +360,14 @@ cat runs/<job-id>/<timestamp>-copilot-package/prompt.copilot.md
 3. **Test with mock**: `agent-job run job.yaml --executor mock`
 4. **Convert one job** to schema v2 manually
 5. **Validate both**: `codex-job validate` and `agent-job validate`
-6. **Switch when ready**: Move to agent-job for all new work
+6. **Switch when ready**: Move new Copilot/manual work to `agent-job`
 
 ### Strategy 2: Immediate
 
 1. **Convert all v1 jobs** to v2 (manual or rely on auto-migration)
 2. **Update scripts** to use `agent-job` commands
 3. **Test thoroughly** with mock executor
-4. **Keep codex-job** as fallback for Codex execution (Phase A)
+4. **Keep codex-job** for Codex execution
 
 ### Strategy 3: Dual (Safe)
 
@@ -382,7 +375,7 @@ cat runs/<job-id>/<timestamp>-copilot-package/prompt.copilot.md
    - `agent-job` for Copilot/manual workflows
    - `codex-job` for Codex execution (Phase A)
 2. **Convert jobs** to v2 as you touch them
-3. **Migrate gradually** as agent-job Codex executor matures
+3. **Migrate gradually** while agent-job Codex support remains unimplemented
 
 ## Testing Migration
 
@@ -397,17 +390,14 @@ agent-job validate examples/bugfix.job.yaml
 # valid: JOB-EXAMPLE-BUGFIX
 ```
 
-### Compare Renders
+### Compare Copilot Packaging
 
 ```bash
 # Old Codex-specific render
 codex-job render examples/bugfix.job.yaml > old-render.txt
 
-# New Codex adapter render
-agent-job render examples/bugfix.job.yaml --target codex > new-render.txt
-
-# Compare (should be similar but not identical)
-diff old-render.txt new-render.txt
+# New Copilot render
+agent-job render examples/v2/copilot-docs.job.yaml --target copilot > copilot-render.txt
 ```
 
 ### Dry-Run Comparison
@@ -432,13 +422,19 @@ agent-job run examples/bugfix.job.yaml --executor mock --dry-run
 
 **Cause**: `model_tier` is Codex-specific, removed in v2
 
-**Solution**: Ignore warning, or configure in Codex executor settings
+**Solution**: Ignore warning. Keep executor-specific model selection in `codex-job` until `agent-job` implements a real Codex path.
+
+### Issue: Codex path not implemented in agent-job
+
+**Cause**: `agent-job` has not implemented live Codex execution or Codex/Claude render targets yet
+
+**Solution**: Use `codex-job` for Codex execution and `agent-job` for Copilot/manual workflows
 
 ### Issue: --executor flag required
 
 **Cause**: agent-job requires explicit executor selection
 
-**Solution**: Add `--executor codex` or `--executor mock`
+**Solution**: Add `--executor mock` for `agent-job`, or keep using `codex-job` for Codex execution
 
 ### Issue: Package mode unclear
 

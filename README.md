@@ -1,11 +1,11 @@
 # agent-job: Universal Agent Job Contract
 
-A universal, executor-neutral engineering job contract system that supports Copilot, manual, and Codex workflows with strict validation, bounded scope, and human review.
+A universal engineering job contract system for Copilot-first and manual workflows with strict validation, bounded scope, and human review.
 
 ## What This Is
 
 - **Universal job contract**: Executor-neutral job specifications for bounded engineering work
-- **Multi-executor support**: Works with GitHub Copilot, manual workflows, local Codex, or mock testing
+- **Copilot-first workflow**: Works with GitHub Copilot, manual workflows, or mock testing
 - **Package mode**: Create work packages for Copilot/manual execution without tool-launched agents
 - **Strict validation**: Fail-closed schema validation with clear error messages
 - **Artifact capture**: Deterministic provenance tracking and human review artifacts
@@ -13,7 +13,7 @@ A universal, executor-neutral engineering job contract system that supports Copi
 
 ## What This Is Not
 
-- Not Codex-specific (Codex is one executor adapter among several)
+- Not a finished multi-agent control plane
 - Not a production platform, queue, or dashboard
 - Not a control plane or provider fanout layer
 - Not an autonomous coding system
@@ -26,11 +26,9 @@ A universal, executor-neutral engineering job contract system that supports Copi
 |---|---|:---:|---|
 | **render** | copilot | No | Generate Copilot-ready prompt |
 | **render** | manual | No | Generate human work order |
-| **render** | codex | No | Generate Codex adapter prompt |
 | **package** | copilot | No | Create Copilot work package |
 | **package** | manual | No | Create manual work package |
 | **run** | mock | Yes | Test without external dependencies |
-| **run** | codex | Yes | Local Codex execution |
 | **report** | any | No | Review run or package artifacts |
 
 ## Quick Start
@@ -89,6 +87,15 @@ Test the workflow without external dependencies:
 ```bash
 agent-job run examples/v2/mock-test.job.yaml --executor mock
 agent-job report runs/JOB-MOCK-TEST-001/*/
+```
+
+### Legacy Codex Runtime
+
+For live local Codex execution, keep using the legacy `codex-job` runtime:
+
+```bash
+codex-job validate examples/bugfix.job.yaml
+codex-job run examples/bugfix.job.yaml
 ```
 
 ### Validate and Render
@@ -164,7 +171,7 @@ agent-job validate <job.job.yaml>
 
 Render job to target-specific prompt:
 ```bash
-agent-job render <job.job.yaml> --target <copilot|manual|codex|claude>
+agent-job render <job.job.yaml> --target <copilot|manual>
 ```
 
 ### package
@@ -178,10 +185,10 @@ agent-job package <job.job.yaml> --target <copilot|manual>
 
 Execute job via specified executor:
 ```bash
-agent-job run <job.job.yaml> --executor <codex|mock> [--dry-run]
+agent-job run <job.job.yaml> --executor <mock> [--dry-run]
 ```
 
-**Note**: `--executor copilot` is not supported. Use `package --target copilot` instead.
+**Note**: live `codex` execution is not yet implemented in `agent-job`. Use `codex-job` for Codex execution.
 
 ### report
 
@@ -242,7 +249,7 @@ See [Migration Guide](docs/migration-from-codex-job.md) for details.
 
 ## Migration from codex-job
 
-The `codex-job` CLI is the legacy Codex-specific predecessor to `agent-job`. Both can coexist.
+The `codex-job` CLI is the legacy Codex-specific runtime that still handles live Codex execution while `agent-job` focuses on Copilot/manual workflows.
 
 ### Key Differences
 
@@ -253,20 +260,20 @@ The `codex-job` CLI is the legacy Codex-specific predecessor to `agent-job`. Bot
 | Copilot support | No | Yes (package mode) |
 | Manual support | No | Yes (package mode) |
 | Provenance | `claimed_by_codex` | `claimed_by_agent` |
-| Auth requirement | Always Codex | Only when `--executor codex` |
-| Render targets | One (Codex) | Multiple (Copilot, manual, Codex) |
+| Auth requirement | Always Codex | None for package/mock paths |
+| Render targets | One (Codex) | Copilot and manual |
 
 ### Migration Steps
 
-1. **Keep using codex-job** for existing Codex workflows (no changes needed)
-2. **Try agent-job** for new Copilot/manual workflows
+1. **Keep using codex-job** for Codex execution
+2. **Use agent-job** for new Copilot/manual workflows
 3. **Convert jobs** from schema v1 → v2 (or use auto-migration)
 4. **Test with mock**: `agent-job run job.yaml --executor mock`
-5. **Switch to agent-job** when ready
+5. **Wait on agent-job Codex support** until it is actually implemented
 
 See [Migration Guide](docs/migration-from-codex-job.md) for complete instructions.
 
-## Using codex-job (Legacy)
+## Using codex-job (Legacy Runtime)
 
 The original `codex-job` CLI remains available:
 
@@ -359,7 +366,7 @@ See [Architecture Documentation](docs/current-architecture.md) for details.
 ## Known Limitations
 
 Phase A limitations:
-- Codex executor: Full execution pending migration (dry-run works)
+- agent-job Codex execution: Not yet implemented
 - Completion ingestion: Not yet implemented
 - Claude renderer: Not yet implemented
 - Git integration: Partial (from codex-job, not fully migrated)

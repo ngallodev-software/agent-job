@@ -4,10 +4,10 @@
 
 The repository contains two CLI systems:
 
-1. **agent-job** (recommended): Universal executor-neutral architecture
-2. **codex-job** (legacy): Codex-specific runtime
+1. **agent-job** (recommended): Copilot/manual forward path with mock testing
+2. **codex-job** (legacy but active): Codex-specific runtime
 
-Both can coexist. New work should use agent-job.
+Both can coexist. New work should use `agent-job` for Copilot/manual workflows and `codex-job` for live Codex execution.
 
 ## agent-job: Universal Architecture
 
@@ -34,14 +34,14 @@ The universal CLI:
 │         Renderer Layer                          │
 │  - Copilot renderer (copilot_renderer.py)      │
 │  - Manual renderer (manual_renderer.py)         │
-│  - Codex renderer (codex_renderer.py)           │
+│  - Codex/Claude placeholders (not implemented)  │
 │  - Base interface (base_renderer.py)            │
 └─────────────────────────────────────────────────┘
                       ▼
 ┌─────────────────────────────────────────────────┐
 │         Executor Layer                          │
 │  - Mock executor (mock_executor.py)             │
-│  - Codex executor adapter (codex_executor.py)   │
+│  - Codex executor placeholder (not implemented) │
 │  - Base interface (base_executor.py)            │
 └─────────────────────────────────────────────────┘
 ```
@@ -62,20 +62,19 @@ The universal CLI:
 5. Print next steps for human
 6. **No execution** - `launched_by_tool: false`
 
-#### Run Mode (Mock/Codex)
+#### Run Mode (Mock)
 
 1. Load and validate `*.job.yaml`
-2. Get executor instance (mock or codex)
+2. Get executor instance (mock)
 3. Check executor can execute job (allowed_executors)
-4. Check auth (only for non-mock executors)
-5. Create run directory: `runs/<job-id>/<timestamp>-<executor>-run/`
-6. Execute via executor
-7. Write artifacts:
+4. Create run directory: `runs/<job-id>/<timestamp>-<executor>-run/`
+5. Execute via executor
+6. Write artifacts:
    - `job.input.yaml`
    - `run.log`
    - `meta.json`
    - `report.json`
-8. Print report summary
+7. Print report summary
 
 ### Artifacts
 
@@ -161,14 +160,11 @@ Universal categories:
 - Review checklist
 - Completion report template
 
-#### Codex Renderer
+#### Codex/Claude Placeholders
 
-**Target**: Codex executor adapter
+**Status**: Not yet implemented in `agent-job`
 
-**Output**: Codex-optimized prompt
-- Marked as adapter-specific
-- Embedded report markers
-- Codex-specific structure
+These code paths exist as placeholders only. Live Codex execution still belongs to `codex-job`.
 
 ### Schema v2
 
@@ -260,10 +256,10 @@ Categories:
 | **Copilot support** | Yes (package mode) | No |
 | **Manual support** | Yes (package mode) | No |
 | **Mock executor** | Yes | No |
-| **Codex execution** | Pending (Phase A stub) | Yes (full) |
+| **Codex execution** | Not yet implemented | Yes (full) |
 | **Provenance** | `claimed_by_agent` | `claimed_by_codex` |
-| **Auth requirement** | Only when `--executor codex` | Always |
-| **Render targets** | Multiple (Copilot, manual, Codex) | One (Codex) |
+| **Auth requirement** | None for package/mock paths | Always |
+| **Render targets** | Copilot and manual today | One (Codex) |
 | **Package mode** | Yes | No |
 | **Lines of code** | ~3000 (modular) | ~1200 (monolithic) |
 
