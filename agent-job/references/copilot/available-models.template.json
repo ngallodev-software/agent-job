@@ -1,0 +1,26 @@
+[
+  {
+    "model_id": "claude-haiku-4.5",
+    "name": "Claude Haiku 4.5",
+    "provider": "anthropic",
+    "tier": "low",
+    "token_cost_multiplier": 0.33,
+    "recomended": false
+  },
+  {
+    "model_id": "gpt-5-mini",
+    "name": "GPT-5 mini",
+    "provider": "openai",
+    "tier": "very-low",
+    "token_cost_multiplier": 0,
+    "recomended": false
+  },
+  {
+    "model_id": "gpt-4.1",
+    "name": "GPT-4.1",
+    "provider": "openai",
+    "tier": null,
+    "token_cost_multiplier": 1,
+    "recomended": false
+  }
+]
