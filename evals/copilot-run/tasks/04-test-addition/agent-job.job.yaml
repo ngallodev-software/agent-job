@@ -1,0 +1,67 @@
+# Replace repo_path if your checkout lives somewhere other than /lump/apps/invoke-codex-from-claude.
+schema_version: 2
+id: EVAL-04-TEST-ADDITION
+title: Add focused path policy test coverage
+repo_path: /lump/apps/invoke-codex-from-claude/evals/copilot-run/fixtures/sample-repo
+branch: null
+
+task:
+  type: test
+  objective: >
+    Add focused automated test coverage for one path_policy behavior that is currently missing.
+  context: |
+    This task is meant to measure testing discipline. Prefer a test-only change. Do not expand
+    the task into source refactoring unless the test truly requires it.
+  constraints:
+    - Prefer adding a new test file or extending tests only.
+    - Do not modify unrelated source files.
+    - Do not auto-commit changes.
+    - Do not auto-push to remote.
+  acceptance_criteria:
+    - At least one meaningful path_policy behavior gains focused automated coverage.
+    - The test change is easy to review.
+    - Tests run are reported precisely.
+
+scope:
+  allowed_paths:
+    - tests/test_path_policy.py
+  forbidden_paths:
+    - README.md
+    - src/calculator.py
+    - src/report_formatter.py
+    - src/path_policy.py
+
+execution:
+  mode: agent
+  preferred_executor: copilot
+  model_tier: medium
+  allowed_executors:
+    - copilot
+    - human
+  disallowed_executors:
+    - codex
+    - mock
+  commands_allowed:
+    - python3
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands:
+    - python3 -m unittest discover -s tests
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: true
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: true
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

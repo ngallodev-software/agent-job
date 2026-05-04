@@ -1,0 +1,67 @@
+# Replace repo_path if your checkout lives somewhere other than /lump/apps/invoke-codex-from-claude.
+schema_version: 2
+id: EVAL-02-SMALL-BUGFIX
+title: Fix fractional average bug in calculator helper
+repo_path: /lump/apps/invoke-codex-from-claude/evals/copilot-run/fixtures/sample-repo
+branch: null
+
+task:
+  type: bugfix
+  objective: >
+    Fix the average calculation so fractional averages are returned correctly.
+  context: |
+    calculator.average() currently truncates fractional results. Keep the fix narrow and add
+    or update focused regression coverage if needed.
+  constraints:
+    - Keep the change limited to the average bug and its direct test coverage.
+    - Do not rewrite unrelated calculator helpers.
+    - Do not auto-commit changes.
+    - Do not auto-push to remote.
+  acceptance_criteria:
+    - average([1, 2]) returns 1.5 rather than a truncated integer-like result.
+    - Existing calculator behavior outside the bugfix remains unchanged.
+    - Focused calculator tests are run and reported.
+
+scope:
+  allowed_paths:
+    - src/calculator.py
+    - tests/test_calculator.py
+  forbidden_paths:
+    - README.md
+    - src/report_formatter.py
+    - src/path_policy.py
+
+execution:
+  mode: agent
+  preferred_executor: copilot
+  model_tier: medium
+  allowed_executors:
+    - copilot
+    - human
+  disallowed_executors:
+    - codex
+    - mock
+  commands_allowed:
+    - python3
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands:
+    - python3 -m unittest tests.test_calculator
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: true
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: true
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

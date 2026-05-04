@@ -164,7 +164,7 @@ Stale or misleading for eval-suite planning:
 - `CONTRIBUTING.md` was recently improved, but broader repo docs are still mixed
 - `docs/current-architecture.md` still describes the dual-system world and some future phases
 - many `docs/phase-a-*` and Codex-era docs should not guide suite design
-- `future-plans/` and `deprecated/` are not relevant implementation references
+- `archive/future-plans/` and `archive/deprecated/` are not relevant implementation references
 
 Critical observation:
 

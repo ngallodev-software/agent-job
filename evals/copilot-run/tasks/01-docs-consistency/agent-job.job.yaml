@@ -1,0 +1,64 @@
+# Replace repo_path if your checkout lives somewhere other than /lump/apps/invoke-codex-from-claude.
+schema_version: 2
+id: EVAL-01-DOCS-CONSISTENCY
+title: Fix stale docs references in fixture README
+repo_path: /lump/apps/invoke-codex-from-claude/evals/copilot-run/fixtures/sample-repo
+branch: null
+
+task:
+  type: docs
+  objective: >
+    Update the fixture README so it accurately describes the current test command and current
+    test coverage claims.
+  context: |
+    This task is intentionally low risk. The README currently contains stale or inaccurate
+    statements. The goal is to improve documentation accuracy without touching source code.
+  constraints:
+    - Keep the change focused on README.md only.
+    - Do not modify source files or tests.
+    - Do not auto-commit changes.
+    - Do not auto-push to remote.
+  acceptance_criteria:
+    - README.md describes the correct test command for the fixture repo.
+    - README.md no longer claims path_policy.py is fully covered by tests.
+    - No files outside README.md are modified.
+
+scope:
+  allowed_paths:
+    - README.md
+  forbidden_paths:
+    - src/
+    - tests/
+
+execution:
+  mode: agent
+  preferred_executor: copilot
+  model_tier: medium
+  allowed_executors:
+    - copilot
+    - human
+  disallowed_executors:
+    - codex
+    - mock
+  commands_allowed:
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: true
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: true
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

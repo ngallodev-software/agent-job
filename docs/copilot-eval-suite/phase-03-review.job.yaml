@@ -1,0 +1,69 @@
+schema_version: 2
+id: COPILOT-EVAL-PHASE3-REVIEW
+title: Review planned Phase 3 task coverage for Copilot eval suite
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: eval-suite
+
+task:
+  type: analysis
+  objective: >
+    Review the planned six-task Copilot eval suite and confirm whether the task coverage,
+    fixture mapping, and fairness goals are coherent before the task files are authored.
+  context: |
+    The fixture repo is tiny and supports six planned task types:
+    docs consistency, small bugfix, small refactor, test addition, scope boundary, and
+    ambiguous request. The suite compares competent baseline prompts against agent-job
+    packaged prompts. The review should focus on fairness, coverage, and overengineering risk.
+  constraints:
+    - Do not make code changes.
+    - Keep the analysis short and concrete.
+    - Do not invent new framework work.
+    - Distinguish observed facts from recommendations.
+  acceptance_criteria:
+    - Confirms whether the six planned tasks are meaningfully distinct.
+    - Calls out any obvious fairness risks in the planned task mix.
+    - Recommends small adjustments if a task is too weak or too overlapping.
+    - Flags any fixture mismatch that would make a task awkward to run.
+
+scope:
+  allowed_paths:
+    - docs/
+    - evals/
+  forbidden_paths:
+    - .git/
+    - runs/
+
+execution:
+  mode: agent
+  preferred_executor: codex
+  model: gpt-5.4-mini
+  allowed_executors:
+    - codex
+  disallowed_executors:
+    - copilot
+    - mock
+  commands_allowed:
+    - rg
+    - sed
+    - cat
+    - find
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z
