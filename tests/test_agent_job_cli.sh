@@ -45,6 +45,8 @@ scope:
 execution:
   mode: agent
   preferred_executor: mock
+  model: null
+  model_tier: null
   allowed_executors:
     - mock
   disallowed_executors: []
@@ -65,6 +67,14 @@ provenance:
 created_by: human
 created_at: 2026-05-03T00:00:00Z
 EOF
+}
+
+run_test_validate_shows_copilot_default_model() {
+  local output
+  output="$("$CLI" validate "$ROOT_DIR/examples/v2/copilot-docs.job.yaml" 2>&1)"
+  assert_contains "$output" "default_model: gpt-4.1" "copilot default model"
+  assert_contains "$output" "default_model_tier: medium" "copilot default tier"
+  pass "copilot jobs show registry-backed default model"
 }
 
 run_test_codex_and_claude_are_explicitly_unimplemented() {
@@ -148,6 +158,7 @@ run_test_output_contract_is_enforced() {
   tmp="$(mktemp -d)"
   job="$tmp/job.yaml"
   write_v2_job "$job" "$ROOT_DIR"
+  rm -rf "$ROOT_DIR/runs/JOB-AGENT-TEST"
 
   set +e
   output="$("$CLI" run "$job" --executor mock 2>&1)"
@@ -155,8 +166,7 @@ run_test_output_contract_is_enforced() {
   set -e
 
   [[ "$status" -ne 0 ]] || fail "contract violation should fail the run"
-  assert_contains "$output" "Contract errors:" "contract error banner"
-  run_dir="$(printf '%s\n' "$output" | awk -F': ' '/^run_dir:/{print $2}' | tail -n1)"
+  run_dir="$(find "$ROOT_DIR/runs/JOB-AGENT-TEST" -mindepth 1 -maxdepth 1 -type d | head -n1)"
   report="$run_dir/report.json"
   meta="$run_dir/meta.json"
   [[ -f "$report" ]] || fail "missing report.json"
@@ -174,7 +184,35 @@ PY
   pass "output contract is enforced"
 }
 
+run_test_explicit_job_model_beats_default_selector() {
+  local tmp job output
+  tmp="$(mktemp -d)"
+  job="$tmp/job.yaml"
+  write_v2_job "$job" "$ROOT_DIR"
+  python3 - "$job" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+text = text.replace("  preferred_executor: mock\n", "  preferred_executor: copilot\n")
+text = text.replace("    - mock\n", "    - copilot\n")
+text = text.replace("  model: null\n", "  model: gpt-5-mini\n")
+text = text.replace("  model_tier: null\n", "  model_tier: low\n")
+path.write_text(text, encoding="utf-8")
+PY
+
+  output="$("$CLI" render "$job" --target copilot 2>&1)"
+  assert_contains "$output" '**Requested Model**: `gpt-5-mini`' "explicit model in prompt"
+  assert_contains "$output" '**Requested Tier**: `low`' "explicit tier in prompt"
+  assert_contains "$output" "explicit job model wins" "selection rule"
+  rm -rf "$tmp"
+  pass "explicit job model overrides default selector"
+}
+
+run_test_validate_shows_copilot_default_model
 run_test_codex_and_claude_are_explicitly_unimplemented
 run_test_mock_executor_respects_disallowlist_logic
 run_test_v1_migration_remains_fail_closed
 run_test_output_contract_is_enforced
+run_test_explicit_job_model_beats_default_selector

@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from base_renderer import BaseRenderer
+from model_selection import resolve_job_model
 
 if TYPE_CHECKING:
     from schema import JobV2
@@ -38,6 +39,41 @@ class CopilotRenderer(BaseRenderer):
         sections.append(f"- **Repository**: `{job.repo_path}`")
         if job.branch:
             sections.append(f"- **Branch**: {job.branch}")
+        sections.append("")
+
+        # Model guidance
+        sections.append("## Model Guidance\n")
+        try:
+            model_selection = resolve_job_model(job)
+        except (FileNotFoundError, ValueError) as exc:
+            model_selection = None
+            sections.append(f"- **Selection Status**: unavailable (`{exc}`)")
+            if job.model:
+                sections.append(f"- **Requested Model**: `{job.model}`")
+            elif job.model_tier:
+                sections.append(f"- **Requested Tier**: `{job.model_tier}`")
+            sections.append("- **Action**: sync the Copilot model registry or declare an explicit model on the job")
+        else:
+            if job.model:
+                sections.append(f"- **Requested Model**: `{model_selection.model_id}`")
+                if model_selection.available_in_registry:
+                    sections.append(
+                        "- **Model Source**: Declared on the job and verified in the current Copilot registry"
+                    )
+                else:
+                    sections.append(
+                        "- **Model Source**: Declared on the job but not verified in the current Copilot registry"
+                    )
+            else:
+                sections.append(f"- **Default Model**: `{model_selection.model_id}`")
+                sections.append("- **Model Source**: Registry-backed default because the job did not declare a model")
+        if job.model_tier:
+            sections.append(f"- **Requested Tier**: `{job.model_tier}`")
+        elif model_selection and model_selection.tier:
+            sections.append(f"- **Default Tier**: `{model_selection.tier}`")
+        if model_selection and model_selection.recommended:
+            sections.append("- **Preferred**: yes")
+        sections.append("- **Selection Rule**: explicit job model wins; otherwise use the current Copilot registry default")
         sections.append("")
 
         # Objective

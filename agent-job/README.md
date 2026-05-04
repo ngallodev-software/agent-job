@@ -148,6 +148,8 @@ scope:
 execution:
   mode: agent | human | ci
   preferred_executor: copilot | human | codex | mock
+  model: optional-model-id
+  model_tier: very-low | low | medium | high
   allowed_executors:
     - copilot
     - human
@@ -179,6 +181,12 @@ created_at: 2026-05-03T00:00:00Z
 
 See `examples/v2/` for complete examples.
 
+Model selection rule:
+
+- if `execution.model` is set, use it
+- otherwise use `execution.model_tier` if provided
+- otherwise choose the registry-backed default for Copilot packaging, preferring `medium` then `low`
+
 ## Schema v1 Compatibility
 
 Schema v1 jobs are auto-migrated to v2 with deprecation warnings:
@@ -186,7 +194,6 @@ Schema v1 jobs are auto-migrated to v2 with deprecation warnings:
 ```bash
 $ agent-job validate examples/bugfix.job.yaml
 warning: schema v1 is deprecated; migrate to schema v2
-warning: ignoring v1 model_tier (Codex-specific, not in v2 schema)
 valid: JOB-EXAMPLE-BUGFIX
 ```
 

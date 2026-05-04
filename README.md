@@ -155,6 +155,8 @@ scope:
 execution:
   mode: agent | human | ci
   preferred_executor: copilot | human | codex | mock
+  model: optional-model-id
+  model_tier: very-low | low | medium | high
   allowed_executors: [list]
   disallowed_executors: [list]
   commands_allowed: [list]
@@ -178,6 +180,12 @@ created_at: 2026-05-03T00:00:00Z
 ```
 
 See `examples/v2/` for complete examples and `agent-job/README.md` for detailed documentation.
+
+Model selection rule:
+
+- if `execution.model` is set, use it
+- otherwise use `execution.model_tier` if provided
+- otherwise choose the registry-backed default for Copilot packaging, preferring `medium` then `low`
 
 ## Commands
 
@@ -279,7 +287,6 @@ Schema v1 (codex-job format) is auto-migrated with warnings:
 ```bash
 $ agent-job validate examples/bugfix.job.yaml
 warning: schema v1 is deprecated; migrate to schema v2
-warning: ignoring v1 model_tier (Codex-specific, not in v2 schema)
 valid: JOB-EXAMPLE-BUGFIX
 ```
 

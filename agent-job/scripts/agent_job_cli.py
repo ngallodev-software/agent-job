@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "executors"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "renderers"))
 
 from schema import JobV2, ValidationError, load_job  # noqa: E402
+from model_selection import resolve_job_model  # noqa: E402
 
 # Import executors
 from codex_executor import CodexExecutor  # noqa: E402
@@ -79,6 +80,17 @@ def cmd_validate(args: argparse.Namespace) -> int:
         print(f"forbidden_paths: {len(job.forbidden_paths)} entries")
         if job.preferred_executor:
             print(f"preferred_executor: {job.preferred_executor}")
+        if job.model:
+            print(f"model: {job.model}")
+        elif job.preferred_executor == "copilot":
+            try:
+                selection = resolve_job_model(job)
+            except (FileNotFoundError, ValueError) as exc:
+                print(f"default_model_status: unavailable ({exc})")
+            else:
+                print(f"default_model: {selection.model_id}")
+                if selection.tier:
+                    print(f"default_model_tier: {selection.tier}")
         return 0
     except ValidationError as exc:
         print(f"invalid: {exc}", file=sys.stderr)
@@ -247,6 +259,21 @@ def cmd_package(args: argparse.Namespace) -> int:
         (package_dir / "report-template.md").write_text(report_template, encoding="utf-8")
 
         # Write meta.json
+        try:
+            model_selection = resolve_job_model(job)
+            model_selection_meta: dict[str, Any] | None = {
+                "model_id": model_selection.model_id,
+                "source": model_selection.source,
+                "tier": model_selection.tier,
+                "available_in_registry": model_selection.available_in_registry,
+            }
+        except (FileNotFoundError, ValueError) as exc:
+            model_selection_meta = {
+                "error": str(exc),
+                "requested_model": job.model,
+                "requested_tier": job.model_tier,
+            }
+
         meta = {
             "schema_version": 2,
             "job_id": job.job_id,
@@ -258,6 +285,7 @@ def cmd_package(args: argparse.Namespace) -> int:
             "process_success": None,
             "exit_code": None,
             "human_review_required": True,
+            "model_selection": model_selection_meta,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         write_json(package_dir / "meta.json", meta)

@@ -26,6 +26,7 @@ TASK_TYPES = {"implementation", "bugfix", "refactor", "test", "docs", "analysis"
 EXECUTION_MODES = {"agent", "human", "ci"}
 KNOWN_EXECUTORS = {"codex", "mock", "human"}  # copilot not executable
 KNOWN_TARGETS = {"copilot", "manual", "codex", "claude"}
+KNOWN_MODEL_TIERS = {"very-low", "low", "medium", "high"}
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,8 @@ class JobV2:
     # Execution section
     mode: str
     preferred_executor: str | None
+    model: str | None
+    model_tier: str | None
     allowed_executors: list[str]
     disallowed_executors: list[str]
     commands_allowed: list[str]
@@ -302,6 +305,12 @@ def load_job_v2_from_mapping(raw: Mapping[str, Any], source_path: Path) -> JobV2
         raise ValidationError(f"execution.mode must be one of {', '.join(sorted(EXECUTION_MODES))}")
 
     preferred_executor = optional_string(execution, "preferred_executor")
+    model = optional_string(execution, "model")
+    model_tier = optional_string(execution, "model_tier")
+    if model_tier and model_tier not in KNOWN_MODEL_TIERS:
+        raise ValidationError(
+            f"execution.model_tier must be one of {', '.join(sorted(KNOWN_MODEL_TIERS))}"
+        )
     allowed_executors = validate_list_of_strings(execution, "allowed_executors")
     disallowed_executors = validate_list_of_strings(execution, "disallowed_executors")
 
@@ -345,6 +354,8 @@ def load_job_v2_from_mapping(raw: Mapping[str, Any], source_path: Path) -> JobV2
         forbidden_paths=sorted(dict.fromkeys(forbidden_paths)),
         mode=mode,
         preferred_executor=preferred_executor,
+        model=model,
+        model_tier=model_tier,
         allowed_executors=allowed_executors,
         disallowed_executors=disallowed_executors,
         commands_allowed=commands_allowed,
@@ -389,6 +400,8 @@ def migrate_v1_to_v2(raw_v1: dict[str, Any], source_path: Path) -> JobV2:
         "execution": {
             "mode": "agent",  # v1 assumed agent mode
             "preferred_executor": "codex",  # v1 was Codex-specific
+            "model": raw_v1.get("model"),
+            "model_tier": raw_v1.get("model_tier"),
             "allowed_executors": ["codex", "mock"],  # Assume backwards compat
             "disallowed_executors": [],
             "commands_allowed": raw_v1.get("commands_allowed", []),
@@ -404,12 +417,6 @@ def migrate_v1_to_v2(raw_v1: dict[str, Any], source_path: Path) -> JobV2:
         "created_by": raw_v1.get("created_by"),
         "created_at": raw_v1.get("created_at"),
     }
-
-    # Warn about dropped Codex-specific fields
-    if "model_tier" in raw_v1:
-        print(f"warning: ignoring v1 model_tier (Codex-specific, not in v2 schema)", file=sys.stderr)
-    if "model" in raw_v1:
-        print(f"warning: ignoring v1 model (executor-specific, configure in executor)", file=sys.stderr)
 
     # Now validate as v2 using the same fail-closed logic as native schema v2.
     return load_job_v2_from_mapping(v2_raw, source_path)

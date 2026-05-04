@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from base_renderer import BaseRenderer
+from model_selection import resolve_job_model
 
 if TYPE_CHECKING:
     from schema import JobV2
@@ -27,6 +28,25 @@ class ManualRenderer(BaseRenderer):
         sections.append(f"**Repository**: {job.repo_path}")
         if job.branch:
             sections.append(f"**Branch**: {job.branch}")
+        sections.append("")
+
+        # Model guidance
+        sections.append("## Model Guidance\n")
+        try:
+            model_selection = resolve_job_model(job)
+        except (FileNotFoundError, ValueError):
+            model_selection = None
+        if job.model:
+            sections.append(f"- Use `{job.model}` if that model is available in the execution environment.")
+        elif model_selection:
+            sections.append(f"- Default to `{model_selection.model_id}` when no model is declared on the ticket.")
+        else:
+            sections.append("- No registry-backed default model is currently available.")
+        if job.model_tier:
+            sections.append(f"- Requested tier: `{job.model_tier}`")
+        elif model_selection and model_selection.tier:
+            sections.append(f"- Default tier: `{model_selection.tier}`")
+        sections.append("- Explicit ticket model beats the default selector.")
         sections.append("")
 
         # What to do
