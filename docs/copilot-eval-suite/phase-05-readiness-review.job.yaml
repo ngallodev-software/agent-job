@@ -1,0 +1,66 @@
+schema_version: 2
+id: COPILOT-EVAL-PHASE5-READINESS-REVIEW
+title: Final readiness review for Copilot eval suite
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: eval-suite
+
+task:
+  type: analysis
+  objective: >
+    Review the nearly finished Copilot eval suite and identify any remaining readiness blockers
+    before real manual dogfooding begins.
+  context: |
+    The suite now has a fixture repo, six task packs, shared rubric/runbook assets, and a static
+    self-check. The review should focus on whether the suite is ready for manual Copilot A/B runs,
+    not on hypothetical future framework work.
+  constraints:
+    - Do not modify files.
+    - Keep feedback evidence-based and concise.
+    - Distinguish blockers from nice-to-have improvements.
+  acceptance_criteria:
+    - Identifies any remaining readiness blockers, if present.
+    - Confirms what is already strong enough and should not be churned further.
+    - Gives a direct go/no-go verdict for manual Copilot dogfooding.
+
+scope:
+  allowed_paths:
+    - evals/
+    - docs/
+  forbidden_paths:
+    - .git/
+    - runs/
+
+execution:
+  mode: agent
+  preferred_executor: codex
+  model: gpt-5.4-mini
+  allowed_executors:
+    - codex
+  disallowed_executors:
+    - copilot
+    - mock
+  commands_allowed:
+    - rg
+    - sed
+    - cat
+    - find
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

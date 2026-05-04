@@ -54,3 +54,25 @@ The suite is implementation-ready when:
 - the fixture repo is small and repeatable
 - the runbook is explicit enough for a human to execute without guessing
 - scoring allows `baseline better`, `roughly equal`, and `inconclusive`
+
+## Post-Suite Backlog
+
+### Remote Installer for Copilot Skill
+
+Defer until the eval suite is complete.
+
+Target outcome:
+
+- a user can run one `curl` command against this GitHub repo
+- that command fetches a remote install shell script
+- the script downloads only the skill files and folders needed for Copilot use
+- the script installs them into the correct local Copilot locations
+- the user does not need to clone or manually unpack the full repository
+
+Success criteria:
+
+- documented one-line install command
+- remote installer is idempotent
+- installer fetches only the required `agent-job` skill payload
+- installer handles update vs fresh install cleanly
+- installer leaves no secret material or unnecessary repo residue on disk

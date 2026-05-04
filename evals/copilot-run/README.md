@@ -77,6 +77,14 @@ Use the instructions in `runbook.md`.
 
 Do not improvise the A/B flow. The suite is only useful if both runs use the same task, the same fixture state, and the same reviewer rubric.
 
+## Suite Sanity Check
+
+Before running live Copilot comparisons:
+
+```bash
+python3 evals/copilot-run/self_check.py
+```
+
 ## How to Compare Baseline vs Agent-Job
 
 - compare the actual Copilot responses
