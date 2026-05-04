@@ -120,6 +120,36 @@ cat runs/JOB-COPILOT-DOCS-001/*/prompt.copilot.md
 - `job.input.yaml` - Original job spec
 - `meta.json` - Package metadata
 
+### Copilot Eval Suite Quick Start
+
+The eval suite runs from a local checkout of this repository.
+
+Install for Copilot:
+
+```bash
+gh skill preview ngallodev-software/agent-job agent-job --allow-hidden-dirs
+gh skill install ngallodev-software/agent-job agent-job --allow-hidden-dirs
+curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/install_agent_job_remote.sh | bash
+```
+
+Run one eval task from the repo checkout:
+
+```bash
+python3 evals/copilot-run/self_check.py
+TASK=01-docs-consistency
+./agent-job/scripts/agent-job validate evals/copilot-run/tasks/$TASK/agent-job.job.yaml
+./agent-job/scripts/agent-job package evals/copilot-run/tasks/$TASK/agent-job.job.yaml --target copilot
+cat runs/*/*-copilot-package/prompt.copilot.md
+```
+
+Then use:
+
+- `evals/copilot-run/tasks/$TASK/baseline-prompt.md`
+- the generated `runs/.../prompt.copilot.md`
+- `evals/copilot-run/tasks/$TASK/evaluator-prompt.md`
+
+to run the baseline pass, the `agent-job` pass, and the comparison.
+
 ### Manual Workflow
 
 Create a human-readable work order:
