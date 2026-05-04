@@ -52,8 +52,8 @@ curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/i
 Copilot-native skill install with GitHub CLI:
 
 ```bash
-gh skill preview ngallodev-software/agent-job agent-job
-gh skill install ngallodev-software/agent-job agent-job
+gh skill preview ngallodev-software/agent-job agent-job --allow-hidden-dirs
+gh skill install ngallodev-software/agent-job agent-job --allow-hidden-dirs
 ```
 
 That installs only the repo skill payload into Copilot's skill location. From inside that installed skill, Copilot can use the bundled installer script to bootstrap the `agent-job` CLI when needed.

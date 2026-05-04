@@ -39,8 +39,8 @@ curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/i
 Copilot-native skill install:
 
 ```bash
-gh skill preview ngallodev-software/agent-job agent-job
-gh skill install ngallodev-software/agent-job agent-job
+gh skill preview ngallodev-software/agent-job agent-job --allow-hidden-dirs
+gh skill install ngallodev-software/agent-job agent-job --allow-hidden-dirs
 ```
 
 The installed skill includes a bundled bootstrap script that can fetch the minimal CLI payload without cloning the full repository.
