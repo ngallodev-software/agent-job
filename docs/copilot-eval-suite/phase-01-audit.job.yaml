@@ -1,0 +1,74 @@
+schema_version: 2
+id: COPILOT-EVAL-PHASE1-AUDIT
+title: Audit current repo surfaces for Copilot eval suite implementation
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: eval-suite
+
+task:
+  type: analysis
+  objective: >
+    Inspect the current repo state relevant to the Copilot eval suite and produce a concise
+    audit of reusable surfaces, constraints, and likely implementation pitfalls.
+  context: |
+    The repo now uses agent-job as the forward workflow for Copilot/manual packaging.
+    The eval suite will live under evals/copilot-run and should compare a competent baseline
+    Copilot prompt against an agent-job-generated Copilot package prompt.
+    The audit should focus on the current agent-job CLI, schema v2, Copilot render/package
+    path, examples, tests, and any obvious fixture/path constraints that will shape the suite.
+  constraints:
+    - Do not make code changes.
+    - Keep the audit focused on the eval suite implementation surface.
+    - Distinguish observed facts from recommendations.
+    - Do not assume old docs are correct without verifying current files.
+  acceptance_criteria:
+    - Identifies current CLI/package behaviors relevant to the eval suite.
+    - Identifies reusable examples and tests.
+    - Identifies path or validation constraints that will affect job authoring.
+    - Calls out obvious stale or misleading surfaces that should not guide implementation.
+
+scope:
+  allowed_paths:
+    - README.md
+    - agent-job/
+    - examples/
+    - tests/
+    - docs/
+  forbidden_paths:
+    - .git/
+    - evals/
+
+execution:
+  mode: agent
+  preferred_executor: codex
+  model: gpt-5.4-mini
+  allowed_executors:
+    - codex
+  disallowed_executors:
+    - copilot
+    - mock
+  commands_allowed:
+    - rg
+    - sed
+    - cat
+    - find
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

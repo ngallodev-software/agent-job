@@ -1,0 +1,71 @@
+schema_version: 2
+id: COPILOT-EVAL-PHASE2-SCAFFOLD
+title: Scaffold Copilot eval suite fixture and directory layout
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: eval-suite
+
+task:
+  type: analysis
+  objective: >
+    Review the planned Copilot eval suite scaffold and return a concise recommendation for the
+    smallest useful fixture repo and directory layout before implementation.
+  context: |
+    Phase 2 will create evals/copilot-run, shared suite docs, a tiny Python stdlib fixture repo,
+    and task/result directories. The fixture must support six small eval tasks without becoming a
+    real app. The suite should remain human-run and Copilot-only.
+  constraints:
+    - Do not make code changes.
+    - Keep the fixture tiny and realistic.
+    - Prefer reuse of one fixture repo across all six tasks.
+    - Distinguish observed facts from recommendations.
+  acceptance_criteria:
+    - Recommends a minimal fixture shape that supports all six tasks.
+    - Identifies obvious traps in overbuilding the fixture or shared docs.
+    - Confirms the key scaffold directories and placeholder files.
+    - Calls out any current repo conventions that the scaffold should follow.
+
+scope:
+  allowed_paths:
+    - docs/
+    - examples/
+    - tests/
+    - agent-job/
+  forbidden_paths:
+    - .git/
+    - evals/
+
+execution:
+  mode: agent
+  preferred_executor: codex
+  model: gpt-5.4-mini
+  allowed_executors:
+    - codex
+  disallowed_executors:
+    - copilot
+    - mock
+  commands_allowed:
+    - rg
+    - sed
+    - cat
+    - find
+    - git
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z
