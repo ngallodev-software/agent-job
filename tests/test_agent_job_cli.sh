@@ -77,6 +77,27 @@ run_test_validate_shows_copilot_default_model() {
   pass "copilot jobs show registry-backed default model"
 }
 
+run_test_sync_models_uses_payload_root() {
+  local tmp fakebin fakelog output
+  tmp="$(mktemp -d)"
+  fakebin="$tmp/bin"
+  fakelog="$tmp/npm.log"
+  mkdir -p "$fakebin"
+  cat > "$fakebin/npm" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'cwd=%s\\nargs=%s\\n' "\$PWD" "\$*" >> "$fakelog"
+EOF
+  chmod 755 "$fakebin/npm"
+
+  output="$(cd /tmp && PATH="$fakebin:$PATH" "$CLI" sync-models 2>&1)"
+  assert_contains "$output" "refreshing Copilot model registry in $ROOT_DIR" "sync-models status"
+  assert_contains "$(cat "$fakelog")" "cwd=$ROOT_DIR" "sync-models cwd"
+  assert_contains "$(cat "$fakelog")" "args=run copilot:models:sync" "sync-models args"
+  rm -rf "$tmp"
+  pass "sync-models uses payload root"
+}
+
 run_test_codex_and_claude_are_explicitly_unimplemented() {
   local render_output run_output copilot_output
 
@@ -216,6 +237,7 @@ PY
 }
 
 run_test_validate_shows_copilot_default_model
+run_test_sync_models_uses_payload_root
 run_test_codex_and_claude_are_explicitly_unimplemented
 run_test_mock_executor_respects_disallowlist_logic
 run_test_v1_migration_remains_fail_closed

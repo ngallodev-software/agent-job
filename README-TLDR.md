@@ -18,8 +18,7 @@ Preview only:
 ## 2) Sync Copilot models for the current user
 
 ```bash
-npm install
-npm run copilot:models:sync
+agent-job sync-models
 ```
 
 This writes the user-specific Copilot model registry used by `agent-job`.

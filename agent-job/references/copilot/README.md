@@ -22,10 +22,10 @@ Do not hardcode model lists in prompts, docs, or runtime logic. Refresh this reg
 
 ## Install
 
-From the repo root:
+From any shell after `agent-job` is installed:
 
 ```bash
-npm install
+agent-job sync-models
 ```
 
 Requirements:
@@ -39,12 +39,6 @@ Requirements:
 
 ## Refresh the Registry
 
-From the repo root:
-
-```bash
-npm run copilot:models:sync
-```
-
 This sequence:
 
 1. fetches the raw Copilot model list for the current user
@@ -56,6 +50,8 @@ This sequence:
 You can also fetch only the raw payload:
 
 ```bash
+cd ~/.local/share/agent-job
+npm install
 npm run copilot:models:fetch
 ```
 
@@ -64,6 +60,14 @@ npm run copilot:models:fetch
 Edit [available-models.md](/lump/apps/invoke-codex-from-claude/agent-job/references/copilot/available-models.md), then rerun:
 
 ```bash
+agent-job sync-models
+```
+
+Advanced/manual fallback:
+
+```bash
+cd ~/.local/share/agent-job
+npm install
 npm run copilot:models:sync
 ```
 

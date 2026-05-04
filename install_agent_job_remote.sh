@@ -230,5 +230,5 @@ run_local_installer "$INSTALL_DIR"
 log_step "Remote install completed"
 log_step "Installed root: $INSTALL_DIR"
 if [[ "$WITH_MODEL_SYNC" -eq 0 ]]; then
-  log_step "Optional model sync later: cd $INSTALL_DIR && npm install && npm run copilot:models:sync"
+  log_step "Optional model sync later: agent-job sync-models"
 fi

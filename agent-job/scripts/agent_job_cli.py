@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,6 +64,13 @@ def parse_args() -> argparse.Namespace:
     # Report
     report = subparsers.add_parser("report", help="Print report for a run or package")
     report.add_argument("run_path", help="Path to runs/<job-id>/<run-id>/")
+
+    # Sync models
+    subparsers.add_parser(
+        "sync-models",
+        help="Refresh the Copilot model registry from the installed payload root",
+        description="Refresh the Copilot model registry from the installed payload root.",
+    )
 
     return parser.parse_args()
 
@@ -489,6 +498,39 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_models() -> int:
+    """Refresh the Copilot model registry from the installed payload root."""
+    root_dir = Path(__file__).resolve().parents[2]
+    package_json = root_dir / "package.json"
+    sync_script = root_dir / "agent-job" / "references" / "copilot" / "sync-models.mjs"
+    dependency_dir = root_dir / "node_modules" / "@github" / "copilot-sdk"
+
+    if not package_json.exists() or not sync_script.exists():
+        print(
+            "error: installed payload root is incomplete; package.json or sync-models.mjs is missing.",
+            file=sys.stderr,
+        )
+        print(f"resolved root: {root_dir}", file=sys.stderr)
+        return 1
+
+    npm_path = shutil.which("npm")
+    if not npm_path:
+        print("error: npm is required for Copilot model sync.", file=sys.stderr)
+        return 1
+
+    try:
+        if not dependency_dir.exists():
+            print(f"installing model sync dependencies in {root_dir}")
+            subprocess.run([npm_path, "install"], cwd=root_dir, check=True)
+
+        print(f"refreshing Copilot model registry in {root_dir}")
+        subprocess.run([npm_path, "run", "copilot:models:sync"], cwd=root_dir, check=True)
+        return 0
+    except subprocess.CalledProcessError as exc:
+        print(f"error: command failed with exit code {exc.returncode}", file=sys.stderr)
+        return exc.returncode or 1
+
+
 def main() -> int:
     """Main entry point."""
     args = parse_args()
@@ -503,6 +545,8 @@ def main() -> int:
         return cmd_run(args)
     elif args.command == "report":
         return cmd_report(args)
+    elif args.command == "sync-models":
+        return cmd_sync_models()
     else:
         print(f"error: unknown command: {args.command}", file=sys.stderr)
         return 1

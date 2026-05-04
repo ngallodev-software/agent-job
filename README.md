@@ -69,8 +69,7 @@ python3 ./agent-job/scripts/agent-job --help
 For the Copilot model registry pipeline:
 
 ```bash
-npm install
-npm run copilot:models:sync
+agent-job sync-models
 ```
 
 This generates the current user's Copilot-specific registry at:
@@ -84,10 +83,16 @@ Customize preferences in:
 Then rerun:
 
 ```bash
-npm run copilot:models:sync
+agent-job sync-models
 ```
 
 If you used the remote installer, the staged payload lives under `~/.local/share/agent-job` by default:
+
+```bash
+agent-job sync-models
+```
+
+Advanced/manual fallback:
 
 ```bash
 cd ~/.local/share/agent-job

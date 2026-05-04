@@ -112,11 +112,16 @@ to run the baseline pass, the `agent-job` pass, and the comparison.
 From the repo root:
 
 ```bash
-npm install
-npm run copilot:models:sync
+agent-job sync-models
 ```
 
 If you installed with the remote bootstrap script, use the installed payload root:
+
+```bash
+agent-job sync-models
+```
+
+Advanced/manual fallback:
 
 ```bash
 cd ~/.local/share/agent-job
@@ -135,7 +140,7 @@ Customize preferred models by editing:
 Then rerun:
 
 ```bash
-npm run copilot:models:sync
+agent-job sync-models
 ```
 
 See [Copilot Model Registry README](./references/copilot/README.md).
