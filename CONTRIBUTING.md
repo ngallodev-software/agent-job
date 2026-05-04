@@ -30,7 +30,6 @@ Run relevant checks from the repo root before opening a PR.
 Core `agent-job` checks:
 
 - `bash tests/test_agent_job_cli.sh`
-- `bash tests/test_contract_schemas.sh`
 - `bash tests/test_install_dry_run.sh`
 
 Legacy `codex-job` checks when touching legacy runtime files:

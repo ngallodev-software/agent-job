@@ -1,0 +1,66 @@
+schema_version: 2
+id: COPILOT-EVAL-PHASE4-REVIEW
+title: Review shared evaluator assets and runbook for Copilot eval suite
+repo_path: /lump/apps/invoke-codex-from-claude
+branch: eval-suite
+
+task:
+  type: analysis
+  objective: >
+    Review the shared Copilot eval suite assets and identify the most important operator-facing
+    clarity gaps before Phase 4 is finalized.
+  context: |
+    The suite now has a fixture repo, six authored task packs, a README, rubric, runbook,
+    result template, and aggregate template. The review should focus on practical usability,
+    fairness, and whether the runbook matches the current agent-job behavior.
+  constraints:
+    - Do not make code changes.
+    - Keep feedback specific and operator-facing.
+    - Distinguish observed facts from recommendations.
+  acceptance_criteria:
+    - Identifies at least the top runbook or shared-doc gaps that would confuse a human runner.
+    - Calls out any fairness or scoring ambiguity that should be tightened now.
+    - Confirms what already works well enough and should not be overedited.
+
+scope:
+  allowed_paths:
+    - evals/
+    - docs/
+  forbidden_paths:
+    - .git/
+    - runs/
+
+execution:
+  mode: agent
+  preferred_executor: codex
+  model: gpt-5.4-mini
+  allowed_executors:
+    - codex
+  disallowed_executors:
+    - copilot
+    - mock
+  commands_allowed:
+    - rg
+    - sed
+    - cat
+    - find
+  commands_forbidden:
+    - git push
+    - git reset --hard
+    - rm -rf
+  test_commands: []
+
+output_contract:
+  require_summary: true
+  require_changed_files: false
+  require_tests_run: false
+  require_risks: true
+  human_review_required: true
+
+provenance:
+  distinguish_agent_claims: true
+  require_changed_file_snapshot: false
+  require_test_evidence: false
+
+created_by: human
+created_at: 2026-05-03T00:00:00Z

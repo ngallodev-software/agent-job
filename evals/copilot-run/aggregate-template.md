@@ -4,6 +4,8 @@
 
 ## Score Summary
 
+Use equal weighting across rubric dimensions unless a task record explicitly documents a justified override.
+
 | Task | Baseline Avg | Agent-Job Avg | Delta | Result |
 |---|---:|---:|---:|---|
 

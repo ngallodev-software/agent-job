@@ -41,16 +41,23 @@ Optional:
 
 - Copilot model registry synced for the current user
 
+Important:
+
+- the checked-in `agent-job.job.yaml` files currently use the fixture path for this checkout:
+  - `/lump/apps/invoke-codex-from-claude/evals/copilot-run/fixtures/sample-repo`
+- if your checkout lives somewhere else, update `repo_path` in the task file before running `agent-job validate` or `package`
+
 ## Quick Start
 
 1. prepare the fixture repo
 2. choose one task under `tasks/`
-3. run the baseline prompt in Copilot
-4. reset the fixture repo
-5. generate the `agent-job` package prompt
-6. run the generated prompt in Copilot
-7. use the evaluator prompt to compare both runs
-8. record the result with `result-template.md`
+3. if needed, update `repo_path` in that task’s `agent-job.job.yaml`
+4. run the baseline prompt in Copilot
+5. reset the fixture repo
+6. generate the `agent-job` package prompt
+7. run the generated prompt in Copilot
+8. use the evaluator prompt to compare both runs
+9. record the result with `result-template.md`
 
 ## Eval Structure
 
@@ -61,6 +68,8 @@ Optional:
 - `runbook.md`: exact operator workflow
 - `result-template.md`: per-task result record
 - `aggregate-template.md`: multi-task summary
+
+Keep the full `agent-job` package directory for each packaged run. Do not keep only the rendered prompt. The package metadata and companion artifacts are part of the evidence set.
 
 ## How to Run One Task
 
@@ -126,3 +135,8 @@ Stop or redesign:
 - Copilot behavior may vary across environments and org policy
 - this is a small-task suite, not a full production benchmark
 - fixture tasks are realistic but intentionally bounded
+- current task YAML files are checkout-specific until a later path-substitution helper is added
+
+## Scoring Rule
+
+Treat each rubric dimension as equally weighted unless there is documented reason to override that weighting for a specific task run.
