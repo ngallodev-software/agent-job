@@ -20,9 +20,26 @@ run_agent_job_uninstall_dry_run() {
   "$ROOT_DIR/uninstall_agent_job.sh" --dry-run >/dev/null
 }
 
+run_remote_agent_job_install_dry_run() {
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' RETURN
+  bash "$ROOT_DIR/install_agent_job_remote.sh" \
+    --dry-run \
+    --source-base-url "file://$ROOT_DIR" \
+    --repo local/test \
+    --ref local \
+    --install-dir "$tmpdir/install" \
+    --bin-dir "$tmpdir/bin" \
+    --profile "$tmpdir/profile" \
+    --skip-pyyaml-install \
+    >/dev/null
+}
+
 run_install_dry_run
 run_uninstall_dry_run
 run_agent_job_install_dry_run
 run_agent_job_uninstall_dry_run
+run_remote_agent_job_install_dry_run
 
 echo "[PASS] install/uninstall dry-run completed without changes"

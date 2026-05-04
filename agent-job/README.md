@@ -30,6 +30,21 @@
 agent-job --help
 ```
 
+One-command remote install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/install_agent_job_remote.sh | bash
+```
+
+Copilot-native skill install:
+
+```bash
+gh skill preview ngallodev-software/agent-job agent-job
+gh skill install ngallodev-software/agent-job agent-job
+```
+
+The installed skill includes a bundled bootstrap script that can fetch the minimal CLI payload without cloning the full repository.
+
 Direct invocation also works:
 
 ```bash
@@ -67,6 +82,14 @@ Then:
 From the repo root:
 
 ```bash
+npm install
+npm run copilot:models:sync
+```
+
+If you installed with the remote bootstrap script, use the installed payload root:
+
+```bash
+cd ~/.local/share/agent-job
 npm install
 npm run copilot:models:sync
 ```

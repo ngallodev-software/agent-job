@@ -43,6 +43,21 @@ A universal engineering job contract system for Copilot-first and manual workflo
 agent-job --help
 ```
 
+One-command remote install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/install_agent_job_remote.sh | bash
+```
+
+Copilot-native skill install with GitHub CLI:
+
+```bash
+gh skill preview ngallodev-software/agent-job agent-job
+gh skill install ngallodev-software/agent-job agent-job
+```
+
+That installs only the repo skill payload into Copilot's skill location. From inside that installed skill, Copilot can use the bundled installer script to bootstrap the `agent-job` CLI when needed.
+
 **Requirements**: Python 3, PyYAML
 
 Direct invocation still works if you do not want to install a command:
@@ -69,6 +84,14 @@ Customize preferences in:
 Then rerun:
 
 ```bash
+npm run copilot:models:sync
+```
+
+If you used the remote installer, the staged payload lives under `~/.local/share/agent-job` by default:
+
+```bash
+cd ~/.local/share/agent-job
+npm install
 npm run copilot:models:sync
 ```
 
