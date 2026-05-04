@@ -23,11 +23,17 @@
 ### Installation (Phase A - Manual)
 
 ```bash
-# Add agent-job to PATH
-export PATH="/lump/apps/invoke-codex-from-claude/agent-job/scripts:$PATH"
+# Bootstrap a local command
+./install_agent_job.sh
 
-# Or use directly
-python3 /lump/apps/invoke-codex-from-claude/agent-job/scripts/agent-job --help
+# Then verify
+agent-job --help
+```
+
+Direct invocation also works:
+
+```bash
+python3 ./agent-job/scripts/agent-job --help
 ```
 
 ### Validate a Job

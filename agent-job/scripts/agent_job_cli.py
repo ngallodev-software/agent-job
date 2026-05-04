@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     # Run
     run = subparsers.add_parser("run", help="Execute a job via specified executor")
     run.add_argument("job_file", help="Path to *.job.yaml")
-    run.add_argument("--executor", required=True, choices=["codex", "mock"], help="Executor to use")
+    run.add_argument("--executor", required=True, choices=["codex", "copilot", "mock"], help="Executor to use")
     run.add_argument("--dry-run", action="store_true", help="Simulate without actual execution")
 
     # Report
@@ -331,6 +331,17 @@ def build_run_dir(job: JobV2, executor_name: str) -> tuple[str, Path]:
 def cmd_run(args: argparse.Namespace) -> int:
     """Execute job via specified executor."""
     job_path = Path(args.job_file).resolve()
+
+    if args.executor == "copilot":
+        print("error: agent-job run --executor copilot is not supported.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Copilot is supported through package/render mode only.", file=sys.stderr)
+        print("Use one of:", file=sys.stderr)
+        print(f"  agent-job render {args.job_file} --target copilot", file=sys.stderr)
+        print(f"  agent-job package {args.job_file} --target copilot", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("agent-job does not launch Copilot and does not fake Copilot execution.", file=sys.stderr)
+        return 1
 
     if args.executor == "codex":
         print("error: agent-job run --executor codex is not yet implemented.", file=sys.stderr)

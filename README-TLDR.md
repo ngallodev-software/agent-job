@@ -1,99 +1,62 @@
-# invoke-codex-from-claude (TLDR)
+# agent-job (TLDR)
 
-Fast path to install, configure, and run.
+Fast path for the current forward workflow.
 
-## 1) Install
-
-Project-local install:
+## 1) Install agent-job
 
 ```bash
-./install_codex_job_skill.sh --scope project
-```
-
-Optional (deferred/experimental queue+dashboard scripts):
-
-```bash
-./install_codex_job_skill.sh --scope project --include-experimental
-```
-
-Preview only (no changes):
-
-```bash
-./install_codex_job_skill.sh --scope project --dry-run
-```
-
-## 2) Set required env var
-
-```bash
-export CODEX_API_KEY="your-token"
-```
-
-If you use `--notify-cmd`, also set one signing secret:
-
-```bash
-export WEBHOOK_SECRET="shared-secret"
-# or
-export CODEX_WEBHOOK_SECRET="shared-secret"
-```
-
-## 3) Run a task
-
-Canonical runner:
-
-```bash
-codex-job/scripts/run_codex_task.sh \
-  --repo . \
-  --task "Fix failing tests"
-```
-
-Convenience wrapper (delegates to canonical runner):
-
-```bash
-scripts/run_codex_task.sh --repo . --task "Fix failing tests"
-```
-
-Review wrapper (auto-review on real failures, one-line summary enabled by default):
-
-```bash
-codex-job/scripts/invoke_codex_with_review.sh --repo . --task "Fix failing tests"
-```
-
-## 4) Common options
-
-- `--tier low|medium|high` (default `low`)
-- `--no-cache` bypass cache lookup/store for this run
-- `--cache-dir <path>` override cache location
-- `--summarize` print a one-line run summary after completion
-- `--json-out <path>` write summary JSON to a specific path
-- `--event-stream <path>` append run events as JSON lines
-- `--notify-cmd "<cmd>"` send each event JSON to a command on stdin
-
-## 5) Output files
-
-By default under `./runs/`:
-
-- `codex-run-<id>.log`
-- `codex-run-<id>.meta.json`
-- `codex-run-<id>.summary.json`
-
-Summary JSON uses a lean schema (`id`, `exit`, `ok`, `tok`, etc.) with a nested `legacy` block for compatibility.
-
-## 6) Doctor mode
-
-Check environment without running a task:
-
-```bash
-codex-job/scripts/run_codex_task.sh --doctor --repo .
-```
-
-## 7) Uninstall
-
-```bash
-./uninstall_codex_job_skill.sh --scope project
+./install_agent_job.sh
+agent-job --help
 ```
 
 Preview only:
 
 ```bash
-./uninstall_codex_job_skill.sh --scope project --dry-run
+./install_agent_job.sh --dry-run
+```
+
+## 2) Sync Copilot models for the current user
+
+```bash
+npm install
+npm run copilot:models:sync
+```
+
+This writes the user-specific Copilot model registry used by `agent-job`.
+
+## 3) Validate and package a Copilot job
+
+```bash
+agent-job validate examples/v2/copilot-docs.job.yaml
+agent-job package examples/v2/copilot-docs.job.yaml --target copilot
+```
+
+Then:
+
+1. open `runs/<job-id>/<timestamp>-copilot-package/prompt.copilot.md`
+2. paste it into the approved Copilot environment
+3. complete `report-template.md`
+4. review the diff manually
+
+## 4) What this does not do
+
+- does not launch Copilot
+- does not launch Claude
+- does not require Codex auth for package mode
+- does not auto-commit
+- does not auto-push
+
+## 5) Legacy Codex runtime
+
+If you need live local Codex execution, use the legacy path:
+
+```bash
+./install_codex_job_skill.sh --scope project
+codex-job run examples/bugfix.job.yaml
+```
+
+## 6) Uninstall agent-job bootstrap
+
+```bash
+./uninstall_agent_job.sh
 ```

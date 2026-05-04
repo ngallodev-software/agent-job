@@ -12,7 +12,17 @@ run_uninstall_dry_run() {
   "$ROOT_DIR/uninstall.sh" --scope project --dry-run >/dev/null
 }
 
+run_agent_job_install_dry_run() {
+  "$ROOT_DIR/install_agent_job.sh" --dry-run --skip-npm-install >/dev/null
+}
+
+run_agent_job_uninstall_dry_run() {
+  "$ROOT_DIR/uninstall_agent_job.sh" --dry-run >/dev/null
+}
+
 run_install_dry_run
 run_uninstall_dry_run
+run_agent_job_install_dry_run
+run_agent_job_uninstall_dry_run
 
 echo "[PASS] install/uninstall dry-run completed without changes"

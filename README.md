@@ -36,14 +36,20 @@ A universal engineering job contract system for Copilot-first and manual workflo
 ### Installation
 
 ```bash
-# Add agent-job to PATH (temporary)
-export PATH="/lump/apps/invoke-codex-from-claude/agent-job/scripts:$PATH"
+# Bootstrap a local agent-job command
+./install_agent_job.sh
 
-# Or use directly
-python3 /lump/apps/invoke-codex-from-claude/agent-job/scripts/agent-job --help
+# Then verify
+agent-job --help
 ```
 
 **Requirements**: Python 3, PyYAML
+
+Direct invocation still works if you do not want to install a command:
+
+```bash
+python3 ./agent-job/scripts/agent-job --help
+```
 
 For the Copilot model registry pipeline:
 

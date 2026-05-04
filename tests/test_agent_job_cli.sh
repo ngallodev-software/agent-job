@@ -78,18 +78,23 @@ run_test_validate_shows_copilot_default_model() {
 }
 
 run_test_codex_and_claude_are_explicitly_unimplemented() {
-  local render_output run_output
+  local render_output run_output copilot_output
 
   set +e
   render_output="$("$CLI" render "$ROOT_DIR/examples/v2/copilot-docs.job.yaml" --target claude 2>&1)"
   local render_status=$?
+  copilot_output="$("$CLI" run "$ROOT_DIR/examples/v2/copilot-docs.job.yaml" --executor copilot 2>&1)"
+  local copilot_status=$?
   run_output="$("$CLI" run "$ROOT_DIR/examples/v2/copilot-docs.job.yaml" --executor codex 2>&1)"
   local run_status=$?
   set -e
 
   [[ "$render_status" -ne 0 ]] || fail "claude render should fail"
+  [[ "$copilot_status" -ne 0 ]] || fail "copilot run should fail"
   [[ "$run_status" -ne 0 ]] || fail "codex run should fail"
   assert_contains "$render_output" "not yet implemented" "claude render error"
+  assert_contains "$copilot_output" "package/render mode only" "copilot run guidance"
+  assert_contains "$copilot_output" "does not launch Copilot" "copilot execution honesty"
   assert_contains "$run_output" "codex-job run" "codex run guidance"
   pass "unimplemented paths are explicit"
 }

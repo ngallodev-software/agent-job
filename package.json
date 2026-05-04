@@ -1,5 +1,5 @@
 {
-  "name": "invoke-codex-from-claude",
+  "name": "agent-job",
   "version": "1.0.0",
   "description": "A universal engineering job contract system for Copilot-first and manual workflows with strict validation, bounded scope, and human review.",
   "main": "index.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ngallodev/invoke-codex-from-claude.git"
+    "url": "git+https://github.com/ngallodev-software/agent-job.git"
   },
   "keywords": [],
   "author": "",
@@ -25,9 +25,9 @@
     "node": ">=22"
   },
   "bugs": {
-    "url": "https://github.com/ngallodev/invoke-codex-from-claude/issues"
+    "url": "https://github.com/ngallodev-software/agent-job/issues"
   },
-  "homepage": "https://github.com/ngallodev/invoke-codex-from-claude#readme",
+  "homepage": "https://github.com/ngallodev-software/agent-job#readme",
   "dependencies": {
     "@github/copilot-sdk": "^0.3.0"
   }

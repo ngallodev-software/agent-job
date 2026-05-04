@@ -1,44 +1,77 @@
-# Contributing to invoke-codex-from-claude
-This project uses specialized agents and shared scripts that multiple teams touch. Keep changes small, well-tested, and documented so Codex/Gemini runners stay reliable.
+# Contributing to agent-job
+
+Keep changes small, reviewable, and honest about what the tool actually does.
+
+Current repo direction:
+
+- `agent-job` is the forward path for Copilot/manual packaging
+- `codex-job` remains the legacy live Codex runtime
+
+Do not blur those two identities in docs or code.
 
 ## Workflow Expectations
-- Coordinate changes to `codex-job/scripts/run_codex_task.sh`, `codex-job/scripts/run_gemini_task.sh`, and install scripts; these are shared by several tracks (security, caching, tiering, docs).
-- Treat `codex-job/scripts/` as canonical runtime code. Root `scripts/` must stay as thin wrappers and should not re-implement logic.
-- Keep commits descriptive; include what changed and why.
-- Update docs when you add flags, environment variables, or alter the summary JSON schema.
-- Follow the go-live plan in `agent-notes/go-live-rec-detailed-plan.md` for dependency ordering (e.g., error handling before caching/tiering).
+
+- Treat `agent-job` package mode as the primary production-facing workflow.
+- Keep `codex-job` changes isolated to legacy Codex execution work.
+- Do not claim execution support that is not implemented.
+- Update docs when you add or remove commands, schema fields, or install/bootstrap steps.
+- Keep commits descriptive and explicit about user-facing impact.
 
 ## Coding Standards
-- Bash: use `set -euo pipefail`, prefer functions, avoid destructive git commands, and keep error messages non-sensitive. Run `shellcheck` when altering shell scripts if available.
-- Python: keep scripts runnable with `python3`, prefer standard library, and add minimal comments for non-obvious logic.
-- JSON schema (per `json-minimizer`): avoid verbose keys; document any schema change in README and tests.
+
+- Bash: use `set -euo pipefail`, prefer functions, avoid destructive git commands, keep errors non-sensitive.
+- Python: keep scripts runnable with `python3`, prefer standard library where practical, add comments only where logic is not obvious.
+- JSON/YAML contracts: fail closed, avoid implicit magic, document field changes in README and tests.
 
 ## Testing
-Run these from the repo root before opening a PR:
-- `tests/test_agents_metadata.sh` (ensures agent instruction files and telemetry keys are intact)
-- `tests/test_runner_and_parser.sh` (Codex runner + parser)
-- `tests/test_gemini_runner_and_parser.sh` (Gemini runner + parser)
-- `tests/test_invoke_and_notify.sh` (invoke + review + notification flow)
 
-If you touch install/uninstall or notification flows, add/extend bats or shell tests to cover new flags (e.g., `--dry-run`, webhook signing). Use the existing fake Codex/Gemini shims in `tests/` to avoid external calls.
+Run relevant checks from the repo root before opening a PR.
+
+Core `agent-job` checks:
+
+- `bash tests/test_agent_job_cli.sh`
+- `bash tests/test_contract_schemas.sh`
+- `bash tests/test_install_dry_run.sh`
+
+Legacy `codex-job` checks when touching legacy runtime files:
+
+- `bash tests/test_runner_and_parser.sh`
+- `bash tests/test_invoke_and_notify.sh`
+- `bats tests/test_run_codex_task.bats`
+
+If you change install/bootstrap flows, extend or rerun `tests/test_install_dry_run.sh`.
 
 ## Documentation Requirements
-- README must reflect new prerequisites, flags, environment variables, dry-run behavior, and troubleshooting tips.
-- Note schema updates from `json-minimizer` and any install changes from `installation-engineer` work.
-- Include usage examples for new options (resume, tier, caching, doctor, webhook signing) when they land.
+
+- [README.md](/lump/apps/invoke-codex-from-claude/README.md) must describe the supported `agent-job` path accurately.
+- [agent-job/README.md](/lump/apps/invoke-codex-from-claude/agent-job/README.md) must stay aligned with the current CLI behavior.
+- If you touch Copilot model selection, update:
+  - `agent-job/references/copilot/README.md`
+  - `agent-job/references/copilot/available-models.md` when override guidance changes
+- If you touch legacy Codex behavior, keep the docs explicit that it is legacy/runtime-specific.
 
 ## Pull Request Checklist
-- [ ] Tests above pass (attach output or summary).
-- [ ] README/CONTRIBUTING updated for any user-facing change.
-- [ ] Telemetry keys (`input_tokens`, `output_tokens`, `cached_tokens`, `context_tokens`, `elapsed_seconds`) remain documented in agent files when touched.
-- [ ] No hardcoded secrets; required env vars are validated or documented.
-- [ ] For shared scripts, note coordination points (who else is editing, related branches).
 
-## Installing Locally for Development
-- Install the skill with `./install_codex_job_skill.sh --scope project` (safe to re-run).
-- Preview changes with `./install_codex_job_skill.sh --scope project --dry-run`.
-- Uninstall with `./uninstall_codex_job_skill.sh --scope project` (or `--dry-run` to preview).
+- [ ] Relevant tests pass and are summarized in the PR.
+- [ ] README/CONTRIBUTING/docs updated for user-facing changes.
+- [ ] No hardcoded secrets or personal auth artifacts are committed.
+- [ ] Copilot package mode remains honest about non-execution.
+- [ ] No unsupported executor/renderer path is presented as working.
 
-## Support & Questions
-- Add concise notes to `agent-history.log` for cross-agent coordination instead of posting progress in stdout.
-- For schema or cost-reduction questions, sync with the `json-minimizer` track; for install behaviors, sync with the `installation-engineer` track.
+## Local Install for Development
+
+Forward `agent-job` bootstrap:
+
+- `./install_agent_job.sh`
+- `./install_agent_job.sh --dry-run`
+- `./uninstall_agent_job.sh`
+
+Legacy `codex-job` skill install:
+
+- `./install_codex_job_skill.sh --scope project`
+- `./uninstall_codex_job_skill.sh --scope project`
+
+## Support Notes
+
+- Use `agent-history.log` only for concise coordination notes if needed.
+- Prefer deleting stale docs over layering new claims on top of them.
