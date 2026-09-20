@@ -1,7 +1,7 @@
 {
   "name": "agent-job",
   "version": "1.0.0",
-  "description": "A universal engineering job contract system for Copilot-first and manual workflows with strict validation, bounded scope, and human review.",
+  "description": "Historical predecessor to Agent-Workflow; retained for migration archaeology and benchmark research only.",
   "main": "index.js",
   "directories": {
     "doc": "docs",
@@ -30,5 +30,6 @@
   "homepage": "https://github.com/ngallodev-software/agent-job#readme",
   "dependencies": {
     "@github/copilot-sdk": "^0.3.0"
-  }
+  },
+  "private": true
 }
