@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl -fsSL https://raw.githubusercontent.com/ngallodev-software/agent-job/main/install_agent_job_remote.sh | bash "$@"
+cat >&2 <<'EOF'
+The agent-job GitHub skill is retired.
+Do not bootstrap the historical agent-job CLI.
+Use ngallodev-software/agent-workflow instead.
+EOF
+exit 2
